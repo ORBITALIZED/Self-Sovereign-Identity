@@ -22,12 +22,12 @@ This is a **poly-repo-style monorepo**. Every subfolder in `packages/` or `apps/
 
 ## Branching model
 
-| Branch | Purpose |
-|---|---|
-| `main` | Always deployable |
+| Branch      | Purpose                  |
+| ----------- | ------------------------ |
+| `main`      | Always deployable        |
 | `feature/*` | New features (PR target) |
-| `fix/*` | Bug fixes |
-| `docs/*` | Documentation only |
+| `fix/*`     | Bug fixes                |
+| `docs/*`    | Documentation only       |
 
 Use **conventional commits** (`feat:`, `fix:`, `docs:`, `refactor:`).
 
@@ -35,13 +35,13 @@ Use **conventional commits** (`feat:`, `fix:`, `docs:`, `refactor:`).
 
 ## Style
 
-| Language | Linter / Formatter |
-|---|---|
+| Language           | Linter / Formatter              |
+| ------------------ | ------------------------------- |
 | TypeScript / React | ESLint + Prettier (root config) |
-| Rust | `cargo fmt` + `cargo clippy` |
-| Solidity | `forge fmt` + `solhint` |
-| Python | `ruff` + `black` |
-| Circom | `circom --inspect` |
+| Rust               | `cargo fmt` + `cargo clippy`    |
+| Solidity           | `forge fmt` + `solhint`         |
+| Python             | `ruff` + `black`                |
+| Circom             | `circom --inspect`              |
 
 Run `make format` before every commit.
 
@@ -57,6 +57,7 @@ pnpm --filter @ssi/sdk test     # single package
 ```
 
 CI will block merge if:
+
 - Tests fail
 - Coverage drops below **70%**
 - Lint fails
@@ -76,3 +77,15 @@ CI will block merge if:
 ## Security disclosures
 
 Email **security@ssi.example** — do **not** file a public GitHub issue.
+
+---
+
+## Known upstream issues (local drafts only)
+
+Drafts for upstream trackers live in `docs/upstream-issue-drafts/`.
+They are **not** auto-filed — file from your own GitHub identity if/when you take them public.
+
+| Draft                                                                                | Upstream repo           | What it anchors on                                      |
+| ------------------------------------------------------------------------------------ | ----------------------- | ------------------------------------------------------- |
+| `docs/upstream-issue-drafts/rs-stellar-xdr-arbitrary-regression.md`                  | `stellar/rs-stellar-xdr` | bug-origin: `#[derive(Arbitrary)]` calls `try_size_hint` |
+| `docs/upstream-issue-drafts/rs-soroban-sdk-arbitrary-regression.md`                  | `stellar/rs-soroban-sdk` | consumer-side: 20.0.0 `cargo test` regression          |
