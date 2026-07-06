@@ -1,15 +1,90 @@
-# Remix compiler artifacts
+# ============================================================
+# Self-Sovereign Identity — Root .gitignore
+# ============================================================
+
+# Node / pnpm / npm
+node_modules/
+.pnpm-store/
+.pnp.*
+.yarn/cache
+.yarn/install-state.gz
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Turbo / turbo cache
+.turbo/
+
+# Vite / React
+apps/frontend/dist/
+apps/frontend/.vite/
+
+# Next / SSR caches
+.next/
+
+# Remix
 **/artifacts/
 **/artifacts/**
 
-# Remix plugin state folders
-deps/
-states/
+# Hardhat / Foundry (Solidity)
+packages/contracts-evm/cache/
+packages/contracts-evm/out/
+packages/contracts-evm/broadcast/
+packages/contracts-evm/lib/
 
-# Debug info
-*.dbg.json
-*.tsbuildinfo
+# Soroban (Rust)
+packages/contracts-stellar/target/
+packages/contracts-stellar/Cargo.lock
+packages/contracts-stellar/.soroban/
 
-# Optional
+# Circom
+packages/zk-circuits/build/
+packages/zk-circuits/keys/
+packages/zk-circuits/node_modules/
+*.zkey
+*.wtns
+
+# Python
+apps/service-ai-fraud/__pycache__/
+apps/service-ai-fraud/.pytest_cache/
+apps/service-ai-fraud/.venv/
+apps/service-ai-fraud/venv/
+apps/service-ai-fraud/.mypy_cache/
+apps/service-ai-fraud/.ruff_cache/
+apps/service-ai-fraud/models/*.pkl
+apps/service-ai-fraud/models/*.joblib
+
+# Docker
+**/*.log
+docker-compose.override.yml
+
+# Env & secrets
 .env
-.env.local
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+
+# OS junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Coverage / test
+coverage/
+*.lcov
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

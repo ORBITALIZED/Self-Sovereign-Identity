@@ -1,0 +1,48 @@
+import type { FastifyInstance } from "fastify";
+import { z } from "zod";
+import { SSIStellar } from "@ssi/sdk/stellar";
+
+const stellar = new SSIStellar({
+  horizonUrl:   process.env.STELLAR_HORIZON_URL!,
+  rpcUrl:       process.env.STELLAR_SOROBAN_RPC_URL!,
+  networkPassphrase: process.env.STELLAR_NETWORK_PASSPHRASE!,
+  identityContractId: process.env.STELLAR_IDENTITY_CONTRACT ?? "",
+  wrappedBadgeContractId: process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "",
+  sorobanRpcUrl: process.env.STELLAR_SOROBAN_RPC_URL,
+});
+
+// NOTE: the API never accepts a secret key — authentication happens with JWT
+// and Soroban `invokeContract` is signed client-side via Freighter. This
+// body schema mirrors what the wallet sends after the user signs.
+const CreateBody = z.object({
+  pubkey:              z.string().min(56),
+  biometricCommitment: z.string().regex(/^[0-9a-f]{64}$/),
+  metadataCid:         z.string().min(1),
+  recoveryOwners:      z.array(z.string().min(56)).min(1),
+  /** Base64 of the pre-signed Soroban invokeContract XDR — produced by the
+   *  wallet, not by the API. The gateway submits it to the network as-is. */
+  signedInvokeXdr:     z.string().min(1),
+});
+
+export async function identityRoutes(app: FastifyInstance) {
+  // The route is JWT-protected; downstream services verify the signature.
+  app.post("/", { preHandler: [app.authenticate] }, async (req, reply) => {
+    const body = CreateBody.parse(req.body);
+    try {
+      // TODO: forward `body.signedInvokeXdr` to the Soroban RPC.
+      return { accepted: true, signedInvokeXdr: body.signedInvokeXdr };
+    } catch (e) {
+      reply.code(500);
+      return { error: (e as Error).message };
+    }
+  });
+
+  app.get<{ Params: { pubkey: string } }>("/:pubkey", async (req, reply) => {
+    const id = await stellar.identity.get(new Uint8Array(32));
+    if (!id) {
+      reply.code(404);
+      return { error: "not_found" };
+    }
+    return id;
+  });
+}

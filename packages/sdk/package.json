@@ -1,0 +1,41 @@
+{
+  "name": "@ssi/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Self-Sovereign Identity platform — wraps Stellar (Soroban + Horizon), EVM (viem) and ZK (snarkjs) into one ergonomic API.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./stellar": { "import": "./dist/stellar/index.mjs" },
+    "./evm":      { "import": "./dist/evm/index.mjs" },
+    "./zkp":      { "import": "./dist/zkp/index.mjs" }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev":   "tsup --watch",
+    "lint":  "eslint src --ext .ts",
+    "test":  "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^12.0.0",
+    "viem": "^2.21.0",
+    "snarkjs": "^0.1.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "eslint": "^9.0.0",
+    "rimraf": "^5.0.5",
+    "tsup":    "^8.2.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

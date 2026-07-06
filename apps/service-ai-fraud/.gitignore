@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Venv
+.venv/
+venv/
+
+# Models (large binaries)
+models/*.joblib
+models/*.pkl
+
+# Env
+.env
+
+# IDE
+.idea/
+.vscode/

@@ -1,0 +1,118 @@
+version: "3.9"
+
+# =============================================================================
+# Self-Sovereign Identity — Local development stack
+#   Run: `docker compose up --build`  (after running `make bootstrap` once)
+# =============================================================================
+
+services:
+  # ---------- shared infra -------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: ssi-postgres
+    environment:
+      POSTGRES_USER: ssi
+      POSTGRES_PASSWORD: ssi_dev
+      POSTGRES_DB: ssi
+    ports: ["5432:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ssi"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ssi-redis
+    ports: ["6379:6379"]
+    volumes: ["redis-data:/data"]
+
+  ipfs:
+    image: ipfs/kubo:v0.24.0
+    container_name: ssi-ipfs
+    environment:
+      IPFS_API: /ip4/0.0.0.0/tcp/5001
+      IPFS_GATEWAY: /ip4/0.0.0.0/tcp/8081
+    ports:
+      - "5001:5001" # API
+      - "8081:8080" # Gateway
+    volumes:
+      - ipfs-data:/data/ipfs
+
+  # ---------- application services ----------------------------------------
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    container_name: ssi-api-gateway
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_started }
+      ai-fraud: { condition: service_started }
+    environment:
+      DATABASE_URL: postgres://ssi:ssi_dev@postgres:5432/ssi
+      REDIS_URL: redis://redis:6379
+      AI_FRAUD_URL: http://ai-fraud:8000
+      IPFS_URL: http://ipfs:5001
+      STELLAR_HORIZON_URL: ${STELLAR_HORIZON_URL:-https://horizon-testnet.stellar.org}
+      PORT: 8080
+    ports: ["8080:8080"]
+
+  service-bridge-relayer:
+    build:
+      context: ./apps/service-bridge-relayer
+      dockerfile: Dockerfile
+    container_name: ssi-bridge-relayer
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgres://ssi:ssi_dev@postgres:5432/ssi
+      REDIS_URL: redis://redis:6379
+      STELLAR_HORIZON_URL: ${STELLAR_HORIZON_URL:-https://horizon-testnet.stellar.org}
+      STELLAR_NETWORK_PASSPHRASE: ${STELLAR_NETWORK_PASSPHRASE:-Test SDF Network ; September 2015}
+      EVM_RPC_URL: ${EVM_RPC_URL:-http://localhost:8545}
+      EVM_BADGE_CONTRACT: ${EVM_BADGE_CONTRACT:-0x0000000000000000000000000000000000000000}
+      STELLAR_WRAPPED_BADGE_CONTRACT: ${STELLAR_WRAPPED_BADGE_CONTRACT:-}
+
+  service-ipfs:
+    build:
+      context: ./apps/service-ipfs
+      dockerfile: Dockerfile
+    container_name: ssi-ipfs-svc
+    depends_on:
+      - ipfs
+    environment:
+      IPFS_API_URL: http://ipfs:5001
+      ENCRYPTION_KEY: ${IPFS_ENCRYPTION_KEY:-change-me-please}
+
+  ai-fraud:
+    build:
+      context: ./apps/service-ai-fraud
+      dockerfile: Dockerfile
+    container_name: ssi-ai-fraud
+    environment:
+      MODEL_PATH: /app/models/fraud_v1.joblib
+      PYTHONUNBUFFERED: "1"
+    ports: ["8000:8000"]
+    volumes:
+      - ./apps/service-ai-fraud/models:/app/models
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
+        VITE_STELLAR_HORIZON_URL: https://horizon-testnet.stellar.org
+    container_name: ssi-frontend
+    depends_on:
+      - api-gateway
+    ports: ["5173:80"]
+
+volumes:
+  postgres-data:
+  redis-data:
+  ipfs-data:

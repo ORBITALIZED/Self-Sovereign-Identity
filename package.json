@@ -1,0 +1,46 @@
+{
+  "name": "@ssi/workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-Sovereign Identity platform — poly-repo workspace orchestrating Stellar Soroban, EVM Solidity, ZK circuits, off-chain services and the frontend dashboard.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.10.0",
+    "pnpm": ">=8.0.0"
+  },
+  "workspaces": [
+    "packages/sdk",
+    "packages/zk-circuits",
+    "apps/api-gateway",
+    "apps/service-bridge-relayer",
+    "apps/service-ipfs",
+    "apps/frontend",
+    "packages/contracts-evm"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rimraf .turbo node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,sol,rs,py}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,sol,rs,py}\"",
+    "typecheck": "turbo run typecheck",
+    "contracts:build:stellar": "make -C packages/contracts-stellar build",
+    "contracts:build:evm": "forge build --root packages/contracts-evm",
+    "contracts:deploy:stellar": "make -C packages/contracts-stellar deploy",
+    "contracts:deploy:evm": "forge script --root packages/contracts-evm script/Deploy.s.sol --rpc-url ${EVM_RPC_URL:-http://localhost:8545} --broadcast",
+    "zk:compile": "bash packages/zk-circuits/scripts/compile.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "turbo": "^1.13.0",
+    "typescript": "^5.4.5"
+  },
+  "packageManager": "pnpm@8.15.4",
+  "dependencies": {
+    "@changesets/cli": "^2.27.1"
+  }
+}

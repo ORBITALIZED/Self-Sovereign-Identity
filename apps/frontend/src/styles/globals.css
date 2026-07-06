@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  body {
+    @apply font-sans tracking-tight;
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 via-fuchsia-400 to-cyan-300 bg-clip-text text-transparent;
+  }
+  .surface-card {
+    @apply rounded-2xl border border-surface-700 bg-surface-800/60 backdrop-blur-md shadow-glow;
+  }
+  .pulse-dot {
+    @apply h-2 w-2 rounded-full bg-emerald-400 animate-pulse;
+  }
+}

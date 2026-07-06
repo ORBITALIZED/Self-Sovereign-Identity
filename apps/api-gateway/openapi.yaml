@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: SSI API Gateway
+  description: >
+    HTTP gateway for the Self-Sovereign Identity platform.
+    Wraps the Soroban registry, the EVM Soulbound contracts, the IPFS
+    pinning service, and the AI fraud detector behind one REST surface.
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:8080
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Identity:
+      type: object
+      properties:
+        pubkey:
+          type: string
+        biometricCommitment:
+          type: string
+        metadataCid:
+          type: string
+        recoveryOwners:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    Credential:
+      type: object
+      properties:
+        issuer:
+          type: string
+        subject:
+          type: string
+        schemaHash:
+          type: string
+        cid:
+          type: string
+        validUntil:
+          type: integer
+        revoked:
+          type: boolean
+
+security:
+  - bearer: []
+
+paths:
+  /health:
+    get:
+      summary: Liveness + readiness probe.
+      security: []
+      responses:
+        "200":
+          description: ok
+
+  /identity:
+    post:
+      summary: Create a Soroban identity (caller-signed invokeContract XDR).
+      responses:
+        "200":
+          description: Accepted, returns the xdr hash.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  txHash:
+                    type: string
+
+  /identity/{pubkey}:
+    get:
+      summary: Read identity record by Stellar pubkey.
+      parameters:
+        - name: pubkey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Identity object.
+        "404":
+          description: Not found.
+
+  /credentials:
+    post:
+      summary: Issue a credential (issuer-only).
+      responses:
+        "202":
+          description: accepted
+
+  /credentials/{subject}:
+    get:
+      summary: List credential schemas held by a subject.
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of Credential objects.
+
+  /zkp/prove:
+    post:
+      summary: Generate a Groth16 proof server-side.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                circuit:
+                  type: string
+                  enum: [credential, age_verification]
+                input:
+                  type: object
+      responses:
+        "200":
+          description: Proof + publicSignals.
+
+  /zkp/verify:
+    post:
+      summary: Verify a Groth16 proof.
+      responses:
+        "200":
+          description: Boolean verification result.
+
+  /fraud/score:
+    post:
+      summary: Score a synthetic profile for fraud risk.
+      responses:
+        "200":
+          description: Score between 0 and 1.

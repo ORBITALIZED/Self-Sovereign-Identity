@@ -1,0 +1,17 @@
+{
+  "name": "@ssi/zk-circuits",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zero-knowledge circuits (Circom) for selective-disclosure credential proofs.",
+  "scripts": {
+    "compile": "bash scripts/compile.sh",
+    "setup": "bash scripts/setup.sh",
+    "test": "node test/credential.test.js",
+    "clean": "rimraf build keys"
+  },
+  "devDependencies": {
+    "circom_tester": "^0.0.5",
+    "snarkjs": "^0.1.6",
+    "rimraf": "^5.0.5"
+  }
+}

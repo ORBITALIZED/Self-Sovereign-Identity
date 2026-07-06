@@ -1,0 +1,18 @@
+{
+  "name": "@ssi/contracts-evm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EVM (Solidity) smart contracts for the Self-Sovereign Identity platform - Soulbound identity badges + cross-chain bridge stub.",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vv",
+    "coverage": "forge coverage --report summary",
+    "deploy:local": "forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast",
+    "deploy:amoy": "forge script script/Deploy.s.sol --rpc-url polygon --broadcast --verify"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "forge-std": "github:foundry-rs/forge-std"
+  },
+  "keywords": ["solidity", "foundry", "soulbound", "identity", "ssi"]
+}

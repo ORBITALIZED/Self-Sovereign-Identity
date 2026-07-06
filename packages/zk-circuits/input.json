@@ -1,0 +1,12 @@
+{
+  "_comment": "Witness inputs for credential.circom. Replace with real values.",
+  "issuer_merkle_root": "0",
+  "schema_hash": "0",
+  "nullifier_hash": "0",
+  "context": "0",
+  "issuer_pk": "0",
+  "nullifier": "0",
+  "cred_signature": "1",
+  "pathElements": ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
+  "pathIndices":  ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]
+}

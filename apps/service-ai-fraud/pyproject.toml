@@ -1,0 +1,23 @@
+[project]
+name = "ssi-service-ai-fraud"
+version = "0.1.0"
+description = "Self-Sovereign Identity — AI fraud detection microservice"
+requires-python = ">=3.11"
+authors = [{ name = "SSI contributors" }]
+license = { text = "MIT" }
+
+[tool.poetry]
+package-mode = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "PL", "RUF"]
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
