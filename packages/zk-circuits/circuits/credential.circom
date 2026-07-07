@@ -97,10 +97,18 @@ template Credential(merkleLevels) {
     nullHasher.inputs[1] <== context;
     nullHasher.out === nullifier_hash;
 
-    // Signature sanity: must not be zero
+    // Signature sanity: must not be zero.
+    // Circom does not have a `!==` operator — use a quadratic constraint:
+    //   credSignatureSquared = cred_signature * cred_signature
+    // If cred_signature == 0 then credSignatureSquared == 0.
+    // We then require credSignatureSquared != 0 via IsZero + negation.
     signal credSignatureSquared;
     credSignatureSquared <== cred_signature * cred_signature;
-    cred_signature !== 0;
+    // IsZero returns 1 when the input is 0, 0 otherwise.
+    component isZeroSig = IsZero();
+    isZeroSig.in <== credSignatureSquared;
+    // Enforce that the signature is NOT zero: isZero output must be 0.
+    isZeroSig.out === 0;
 }
 
 component main {public [issuer_merkle_root, schema_hash, nullifier_hash, context]} = Credential(20);

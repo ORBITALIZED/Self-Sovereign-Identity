@@ -75,7 +75,7 @@ impl WrappedBadgeContract {
 
         emit_event(
             &env,
-            &["badge_wrapped"],
+            ("badge_wrapped",),
             (
                 subject_pubkey,
                 source_chain_id,
@@ -89,11 +89,12 @@ impl WrappedBadgeContract {
     /// Burn the wrapped badge when the holder wants to unwrap back to source.
     pub fn unwrap_badge(
         env: Env,
+        caller: soroban_sdk::Address,
         subject_pubkey: BytesN<32>,
         source_chain_id: u32,
         source_tx_hash: BytesN<32>,
     ) -> bool {
-        subject_pubkey.require_auth();
+        caller.require_auth();
 
         let key = DataKey::WrappedBadge(
             subject_pubkey.clone(),
@@ -111,7 +112,7 @@ impl WrappedBadgeContract {
 
         emit_event(
             &env,
-            &["badge_unwrapped"],
+            ("badge_unwrapped",),
             (subject_pubkey, source_chain_id, source_tx_hash),
         );
         true

@@ -11,6 +11,10 @@ import {IIdentity} from "./interfaces/IIdentity.sol";
 contract IdentitySBT is ERC721, AccessControl, IIdentity {
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
+    /// @dev Monotonically incrementing token-id counter. OZ v5 ERC721 no
+    ///      longer exposes `_nextTokenId`, so we maintain our own counter.
+    uint256 private _tokenIdCounter;
+
     /// @notice Schema hash → boolean "is this a recognised schema?"
     mapping(bytes32 => bool) public schemas;
 
@@ -35,6 +39,8 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
         for (uint256 i; i < issuers.length; ++i) {
             _grantRole(ISSUER_ROLE, issuers[i]);
         }
+        // Token IDs start at 1 so that 0 remains a sentinel "no token" value.
+        _tokenIdCounter = 1;
     }
 
     // -- Issuer API ---------------------------------------------------------
@@ -94,11 +100,10 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
 
     // -- Helpers ------------------------------------------------------------
 
-    function _nextId() internal view returns (uint256) {
-        // monotonic increment over `_nextTokenId` underlying OZ implementation
-        // for the scaffold this is a simple counter — OZ v5 also stores the
-        // next id in storage; here we mirror that logic.
-        return _nextTokenId; // exposed by newer OZ base
+    /// @dev Returns the next token ID and advances the counter.
+    function _nextId() internal returns (uint256 tokenId) {
+        tokenId = _tokenIdCounter;
+        _tokenIdCounter += 1;
     }
 
     /// @inheritdoc ERC721
@@ -107,5 +112,16 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
         string memory cid = tokenCid[tokenId];
         // ipfs://<cid>
         return string.concat("ipfs://", cid);
+    }
+
+    /// @dev ERC721 and AccessControl both declare supportsInterface; we must
+    ///      provide an explicit override that delegates to both.
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }

@@ -3,6 +3,10 @@
 //! Issued by issuers (universities, employers, hospitals) and held by subjects.
 //! Each credential references an IPFS CID for the encrypted document +
 //! a `schema_hash` describing its type.
+//!
+//! NOTE: `Address` cannot be converted into `BytesN<32>` via `try_into` in
+//! soroban-sdk v20 — they are distinct types.  The `Credential` struct now
+//! stores `issuer` as `Address` directly.
 
 use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, String, Vec};
 
@@ -11,7 +15,7 @@ use crate::storage::{emit_event, DataKey, CREDENTIAL_TTL};
 #[contracttype]
 #[derive(Clone, Debug)]
 pub struct Credential {
-    pub issuer: BytesN<32>,
+    pub issuer: Address,
     pub subject: BytesN<32>,
     pub schema_hash: BytesN<32>,
     pub cid: String,
@@ -44,8 +48,9 @@ impl CredentialsIssuer {
     ) -> bool {
         issuer.require_auth();
 
+        // Store the issuer as an Address — no conversion to BytesN<32> needed.
         let cred = Credential {
-            issuer: issuer.clone().try_into().unwrap(),
+            issuer: issuer.clone(),
             subject: subject.clone(),
             schema_hash: schema_hash.clone(),
             cid,
@@ -75,7 +80,7 @@ impl CredentialsIssuer {
 
         emit_event(
             &env,
-            &["credential_issued"],
+            ("credential_issued",),
             (issuer, subject, schema_hash),
         );
         true
@@ -96,13 +101,14 @@ impl CredentialsIssuer {
             .get(&key)
             .expect("credential not found");
 
-        if cred.issuer != issuer.clone().try_into().unwrap() {
+        // Compare stored issuer (Address) directly — no BytesN conversion.
+        if cred.issuer != issuer {
             panic!("only the original issuer may revoke");
         }
         cred.revoked = true;
         env.storage().persistent().set(&key, &cred);
 
-        emit_event(&env, &["credential_revoked"], (issuer, subject, schema_hash));
+        emit_event(&env, ("credential_revoked",), (issuer, subject, schema_hash));
         true
     }
 

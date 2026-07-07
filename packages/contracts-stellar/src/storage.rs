@@ -1,7 +1,7 @@
 //! Helper types & functions for working with Soroban persistent storage.
 //! Centralises TTL conventions so we don't sprinkle magic numbers everywhere.
 
-use soroban_sdk::{contracttype, Address, BytesN, Env};
+use soroban_sdk::{contracttype, Address, BytesN, Env, IntoVal, Val};
 
 /// Number of ledgers to keep an identity record alive (≈ 5 days at 5s/ledger).
 pub const IDENTITY_TTL: u32 = 17_280;
@@ -38,11 +38,16 @@ pub fn touch_identity(env: &Env, owner: &BytesN<32>) {
 }
 
 /// Helper that lets modules emit a structured event.
-pub fn emit_event<T: soroban_sdk::IntoVal<Env, soroban_sdk::Val>>(
-    env: &Env,
-    topics: &[&str],
-    value: T,
-) {
+///
+/// `topics` must be a Soroban-compatible tuple (e.g. `("my_topic",)` or
+/// `("topic_a", "topic_b")`).  Passing a Rust slice (`&[&str]`) is **not**
+/// accepted by `env.events().publish` — Soroban requires a type that
+/// implements `IntoVal<Env, Val>`, which tuples do but slices do not.
+pub fn emit_event<T, V>(env: &Env, topics: T, value: V)
+where
+    T: IntoVal<Env, Val>,
+    V: IntoVal<Env, Val>,
+{
     env.events().publish(topics, value);
 }
 

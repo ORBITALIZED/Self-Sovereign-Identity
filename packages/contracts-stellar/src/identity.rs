@@ -3,10 +3,15 @@
 //! The on-chain source of truth for every user identity.
 //!
 //! Each identity stores:
-//!   * the user's Stellar `pubkey` (== their wallet address)
+//!   * the user's Stellar `pubkey` (== their wallet address, stored as raw bytes)
 //!   * a `biometric_commitment` — the hash of a WebAuthn-stored biometric
 //!   * an IPFS CID pointing to an *encrypted* profile blob
 //!   * a list of recovery-owner addresses (M-of-N social recovery)
+//!
+//! NOTE: Soroban `require_auth()` is only available on `Address`, not on
+//! `BytesN<32>`. The public-key bytes are stored separately; callers pass
+//! both their `Address` (for authentication) and the raw `BytesN<32>`
+//! (as the storage key / identity pubkey field).
 
 use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, String, Vec};
 
@@ -38,18 +43,22 @@ impl IdentityRegistry {
 
     /// Create a new identity.
     ///
-    /// * `pubkey`            — caller's wallet public key (must auth).
+    /// * `caller`            — the invoker's `Address`; must authorise the call.
+    /// * `pubkey`            — caller's wallet public key (raw 32 bytes, stored).
     /// * `biometric_commit`  — Poseidon-style hash of biometric template.
     /// * `metadata_cid`      — IPFS CID of the encrypted profile blob.
     /// * `recovery_owners`   — list of guardian public keys (M-of-N).
     pub fn create_identity(
         env: Env,
+        caller: Address,
         pubkey: BytesN<32>,
         biometric_commit: BytesN<32>,
         metadata_cid: String,
         recovery_owners: Vec<BytesN<32>>,
     ) -> bool {
-        pubkey.require_auth();
+        // Require the invoker to authenticate.  `Address::require_auth` is the
+        // correct Soroban API — `BytesN<32>` does not have this method.
+        caller.require_auth();
 
         if env
             .storage()
@@ -81,15 +90,15 @@ impl IdentityRegistry {
 
         emit_event(
             &env,
-            &["identity_created"],
+            ("identity_created",),
             (pubkey.clone(), id.biometric_commitment.clone()),
         );
         true
     }
 
     /// Update the encrypted metadata pointer (e.g. user updated their avatar).
-    pub fn update_metadata(env: Env, pubkey: BytesN<32>, new_cid: String) -> bool {
-        pubkey.require_auth();
+    pub fn update_metadata(env: Env, caller: Address, pubkey: BytesN<32>, new_cid: String) -> bool {
+        caller.require_auth();
         let mut id: Identity = env
             .storage()
             .persistent()
@@ -114,10 +123,11 @@ impl IdentityRegistry {
     /// Rotate the biometric commitment (e.g. user re-enrolled their fingerprint).
     pub fn rotate_biometric(
         env: Env,
+        caller: Address,
         pubkey: BytesN<32>,
         new_commit: BytesN<32>,
     ) -> bool {
-        pubkey.require_auth();
+        caller.require_auth();
         let mut id: Identity = env
             .storage()
             .persistent()

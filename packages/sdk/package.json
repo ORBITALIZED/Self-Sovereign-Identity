@@ -9,13 +9,25 @@
   "files": ["dist", "README.md"],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
+      "types":   "./dist/index.d.ts",
+      "import":  "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./stellar": { "import": "./dist/stellar/index.mjs" },
-    "./evm":      { "import": "./dist/evm/index.mjs" },
-    "./zkp":      { "import": "./dist/zkp/index.mjs" }
+    "./stellar": {
+      "types":   "./dist/stellar/index.d.ts",
+      "import":  "./dist/stellar/index.mjs",
+      "require": "./dist/stellar/index.js"
+    },
+    "./evm": {
+      "types":   "./dist/evm/index.d.ts",
+      "import":  "./dist/evm/index.mjs",
+      "require": "./dist/evm/index.js"
+    },
+    "./zkp": {
+      "types":   "./dist/zkp/index.d.ts",
+      "import":  "./dist/zkp/index.mjs",
+      "require": "./dist/zkp/index.js"
+    }
   },
   "scripts": {
     "build": "tsup",
@@ -28,7 +40,7 @@
   "dependencies": {
     "@stellar/stellar-sdk": "^12.0.0",
     "viem": "^2.21.0",
-    "snarkjs": "^0.1.6"
+    "snarkjs": "^0.7.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
