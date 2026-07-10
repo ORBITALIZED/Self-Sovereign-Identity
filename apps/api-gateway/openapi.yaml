@@ -137,6 +137,54 @@ paths:
         "200":
           description: Boolean verification result.
 
+  /bridge/wrapped:
+    get:
+      summary: List recent wrapped-badge events from Horizon.
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 30
+            maximum: 200
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of wrapped badge events.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        subject:
+                          type: string
+                        sourceChainId:
+                          type: integer
+                        sourceTxHash:
+                          type: string
+                        assetCode:
+                          type: string
+                        ts:
+                          type: integer
+                  nextCursor:
+                    type: string
+                    nullable: true
+        "502":
+          description: Horizon upstream error.
+
   /fraud/score:
     post:
       summary: Score a synthetic profile for fraud risk.

@@ -12,6 +12,7 @@ import { healthRoutes } from "./routes/health.js";
 import { identityRoutes } from "./routes/identity.js";
 import { credentialsRoutes } from "./routes/credentials.js";
 import { zkpRoutes } from "./routes/zkp.js";
+import { bridgeRoutes } from "./routes/bridge.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { registerAuth } from "./middleware/auth.js";
 
@@ -38,6 +39,7 @@ export async function build(opts: { jwtSecret: string } = { jwtSecret: "dev" }) 
   await app.register(identityRoutes, { prefix: "/identity" });
   await app.register(credentialsRoutes, { prefix: "/credentials" });
   await app.register(zkpRoutes, { prefix: "/zkp" });
+  await app.register(bridgeRoutes, { prefix: "/bridge" });
 
   app.setErrorHandler(errorHandler);
 
