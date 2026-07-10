@@ -61,11 +61,7 @@ export class SSIStellar {
 }
 
 /** Poll for a Soroban transaction result until it completes or times out. */
-async function pollTransaction(
-  rpc: any,
-  hash: string,
-  timeoutMs = 30_000,
-): Promise<any> {
+async function pollTransaction(rpc: any, hash: string, timeoutMs = 30_000): Promise<any> {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const result = await rpc.getTransaction(hash);
@@ -175,14 +171,7 @@ class IdentitySubClient {
       args.recoveryOwners.map((o) => s.nativeToScVal(o, { type: "bytes" })),
     );
 
-    const op = contract.call(
-      "create_identity",
-      caller,
-      pkScVal,
-      bioScVal,
-      cidScVal,
-      ownersScVal,
-    );
+    const op = contract.call("create_identity", caller, pkScVal, bioScVal, cidScVal, ownersScVal);
 
     // Get the source account for the transaction
     const account = await rpc.getAccount(sourcePubKey);
@@ -210,9 +199,7 @@ class IdentitySubClient {
     const sendResult: any = await rpc.sendTransaction(preparedTx);
 
     if (sendResult.status !== "PENDING") {
-      throw new Error(
-        `Transaction submission failed: ${JSON.stringify(sendResult)}`,
-      );
+      throw new Error(`Transaction submission failed: ${JSON.stringify(sendResult)}`);
     }
 
     // Wait for confirmation
@@ -280,9 +267,7 @@ class CredentialsSubClient {
     }
 
     // list_credentials returns Vec<BytesN<32>> → Uint8Array[]
-    const schemaHashes: Uint8Array[] = s.scValToNative(
-      simResult.result.retval,
-    ) as Uint8Array[];
+    const schemaHashes: Uint8Array[] = s.scValToNative(simResult.result.retval) as Uint8Array[];
 
     if (!Array.isArray(schemaHashes) || schemaHashes.length === 0) {
       return [];

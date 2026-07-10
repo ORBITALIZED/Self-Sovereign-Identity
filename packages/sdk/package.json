@@ -35,7 +35,6 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "eslint src --ext .ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist .turbo"
