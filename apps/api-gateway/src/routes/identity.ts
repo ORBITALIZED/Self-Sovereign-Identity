@@ -31,8 +31,8 @@ export async function identityRoutes(app: FastifyInstance) {
   app.post("/", { preHandler: [app.authenticate] }, async (req, reply) => {
     const body = CreateBody.parse(req.body);
     try {
-      // TODO: forward `body.signedInvokeXdr` to the Soroban RPC.
-      return { accepted: true, signedInvokeXdr: body.signedInvokeXdr };
+      const txHash = await stellar.submitTransaction(body.signedInvokeXdr);
+      return { accepted: true, txHash };
     } catch (e) {
       reply.code(500);
       return { error: (e as Error).message };

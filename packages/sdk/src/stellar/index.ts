@@ -38,6 +38,31 @@ export class SSIStellar {
   wrappedBadge = new WrappedBadgeSubClient(this);
   credentials = new CredentialsSubClient(this);
 
+  /**
+   * Submit a pre-signed transaction envelope (base64 XDR) to the Soroban RPC
+   * and wait for confirmation.
+   *
+   * The transaction must already be fully signed (e.g., by Freighter). The
+   * gateway simply relays it to the network.
+   *
+   * @param signedXdrBase64 - Base64-encoded Soroban TransactionEnvelope XDR.
+   * @returns The transaction hash (hex string) on success.
+   */
+  async submitTransaction(signedXdrBase64: string): Promise<string> {
+    const rpc = await this.soroban();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sendResult: any = await rpc.sendTransaction(signedXdrBase64);
+
+    if (sendResult.status !== "PENDING") {
+      throw new Error(
+        `Transaction submission failed: ${JSON.stringify(sendResult)}`,
+      );
+    }
+
+    await pollTransaction(rpc, sendResult.hash);
+    return sendResult.hash;
+  }
+
   /** Open a Horizon server. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async horizon(): Promise<any> {
@@ -215,13 +240,149 @@ class IdentitySubClient {
 class WrappedBadgeSubClient {
   constructor(private parent: SSIStellar) {}
 
+  /**
+   * Fetch a wrapped badge record by calling the Soroban contract's
+   * `get_wrapped_badge` function via transaction simulation (read-only).
+   */
   async get(
-    _subject: StellarPubKey,
-    _chainId: number,
-    _txHash: Uint8Array,
+    subjectPubkey: StellarPubKey,
+    sourceChainId: number,
+    sourceTxHash: Uint8Array,
   ): Promise<WrappedBadge | null> {
-    void this.parent;
-    return null; // scaffold
+    const s = await stellar();
+    const rpc = await this.parent.soroban();
+    const contractId = this.parent.config.wrappedBadgeContractId;
+    if (!contractId) throw new Error("wrappedBadgeContractId is not configured");
+
+    const contract = new s.Contract(contractId);
+    const pkScVal = s.nativeToScVal(subjectPubkey, { type: "bytes" });
+    const chainIdScVal = s.nativeToScVal(sourceChainId, { type: "u32" });
+    const txHashScVal = s.nativeToScVal(sourceTxHash, { type: "bytes" });
+    const op = contract.call("get_wrapped_badge", pkScVal, chainIdScVal, txHashScVal);
+
+    const nullAccount = new s.Account(
+      "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+      "0",
+    );
+
+    const tx = new s.TransactionBuilder(nullAccount, {
+      fee: s.BASE_FEE,
+      networkPassphrase: this.parent.config.networkPassphrase,
+    })
+      .addOperation(op)
+      .setTimeout(30)
+      .build();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const simResult: any = await rpc.simulateTransaction(tx);
+
+    if (!simResult.result || !simResult.result.retval) {
+      return null;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const native: Record<string, any> = s.scValToNative(simResult.result.retval);
+
+    if (!native) {
+      return null;
+    }
+
+    return {
+      subjectPubkey: native["subject_pubkey"] as StellarPubKey,
+      sourceChainId: Number(native["source_chain_id"]),
+      sourceTxHash: bytesToHex(native["source_tx_hash"] as Uint8Array),
+      cid: native["cid"] as string,
+      assetCode: native["asset_code"] as string,
+      status: (native["status"] as string) === "Active" ? "active" : "burned",
+    };
+  }
+
+  /**
+   * Mint a wrapped badge on Stellar by invoking `wrap_badge` on the Soroban
+   * contract. The relayer must provide its secret key to sign the transaction.
+   *
+   * The transaction is built, simulated to obtain footprints & auth entries,
+   * prepared, signed, submitted, and awaited.
+   *
+   * @returns The transaction hash on confirmation.
+   */
+  async wrap(args: {
+    /** The subject's Stellar public key (32 raw bytes). */
+    subjectPubkey: StellarPubKey;
+    /** Source chain ID (e.g. 80002 for Polygon Amoy). */
+    sourceChainId: number;
+    /** Transaction hash of the BadgeLocked event on the source chain. */
+    sourceTxHash: Uint8Array;
+    /** IPFS CID of the encrypted credential. */
+    cid: string;
+    /** Schema hash (32 bytes) of the credential. */
+    schemaHash: Uint8Array;
+    /** Secret key of the relayer account (G… / S…). */
+    relayerSecret: string;
+  }): Promise<string> {
+    const s = await stellar();
+    const rpc = await this.parent.soroban();
+    const contractId = this.parent.config.wrappedBadgeContractId;
+    if (!contractId) throw new Error("wrappedBadgeContractId is not configured");
+
+    const kp = s.Keypair.fromSecret(args.relayerSecret);
+    const sourcePubKey = kp.publicKey();
+    const contract = new s.Contract(contractId);
+
+    // Build ScVal arguments matching the contract's wrap_badge signature:
+    //   fn wrap_badge(env, relayer: Address, subject_pubkey: BytesN<32>,
+    //                 source_chain_id: u32, source_tx_hash: BytesN<32>,
+    //                 cid: String, schema_hash: BytesN<32>) -> bool
+    const relayerAddr = s.Address.fromString(sourcePubKey).toScVal();
+    const subjectScVal = s.nativeToScVal(args.subjectPubkey, { type: "bytes" });
+    const chainIdScVal = s.nativeToScVal(args.sourceChainId, { type: "u32" });
+    const txHashScVal = s.nativeToScVal(args.sourceTxHash, { type: "bytes" });
+    const cidScVal = s.nativeToScVal(args.cid);
+    const schemaScVal = s.nativeToScVal(args.schemaHash, { type: "bytes" });
+
+    const op = contract.call(
+      "wrap_badge",
+      relayerAddr,
+      subjectScVal,
+      chainIdScVal,
+      txHashScVal,
+      cidScVal,
+      schemaScVal,
+    );
+
+    // Get the source account for the transaction
+    const account = await rpc.getAccount(sourcePubKey);
+
+    const tx = new s.TransactionBuilder(account, {
+      fee: s.BASE_FEE,
+      networkPassphrase: this.parent.config.networkPassphrase,
+    })
+      .addOperation(op)
+      .setTimeout(30)
+      .build();
+
+    // Simulate to obtain footprint and auth entries
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const simResult: any = await rpc.simulateTransaction(tx);
+
+    // Prepare the transaction — merges the simulation result (footprint + auth)
+    const preparedTx = await rpc.prepareTransaction(tx, simResult);
+
+    // Sign with the relayer's keypair
+    preparedTx.sign(kp);
+
+    // Submit
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sendResult: any = await rpc.sendTransaction(preparedTx);
+
+    if (sendResult.status !== "PENDING") {
+      throw new Error(`Transaction submission failed: ${JSON.stringify(sendResult)}`);
+    }
+
+    // Wait for confirmation
+    await pollTransaction(rpc, sendResult.hash);
+
+    return sendResult.hash;
   }
 }
 
