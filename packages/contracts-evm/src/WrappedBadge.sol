@@ -53,7 +53,8 @@ contract WrappedBadge is AccessControl, IIdentity {
         address holder = badge.ownerOf(tokenId);
         require(holder == msg.sender, "SSI: only holder can lock");
 
-        bytes32 schemaHash = badge.credentials(tokenId).schemaHash;
+        IdentitySBT.Credential memory cred = badge.credentials(tokenId);
+        bytes32 schemaHash = cred.schemaHash;
         bytes32 lockHash = keccak256(
             abi.encode(holder, tokenId, destinationChainId, stellarPubKeyXdrHash)
         );

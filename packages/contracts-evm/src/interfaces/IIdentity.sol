@@ -13,15 +13,6 @@ interface IIdentity {
         uint256 tokenId
     );
 
-    /// @notice Emitted when the bridge relayer burns/moves a badge off-chain.
-    event BadgeLocked(
-        address indexed holder,
-        bytes32 indexed schemaHash,
-        uint256 tokenId,
-        uint32 destinationChainId,
-        bytes32 stellarPubKeyXdrHash
-    );
-
     error NotIssuer(address caller);
     error TransferForbidden();
     error AlreadyIssued(address holder, bytes32 schemaHash);

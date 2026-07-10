@@ -18,7 +18,6 @@ concurrency:
 
 env:
   NODE_VERSION: "20"
-  PNPM_VERSION: "8"
   RUST_VERSION: "1.79.0"
 
 jobs:
@@ -39,10 +38,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Setup pnpm ${{ env.PNPM_VERSION }}
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
+        # version auto-detected from package.json packageManager field
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -189,10 +187,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Setup pnpm ${{ env.PNPM_VERSION }}
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
+        # version auto-detected from package.json packageManager field
 
       - name: Install dependencies
         run: pnpm install
