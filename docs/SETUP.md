@@ -6,15 +6,15 @@ A canonical, step-by-step guide for running the entire platform on your machine.
 
 ## 0. Prerequisites
 
-| Tool | Version | Install |
-|---|---|---|
+| Tool    | Version | Install                                                                     |
+| ------- | ------- | --------------------------------------------------------------------------- |
 | Node.js | ≥ 20.10 | [nvm](https://github.com/nvm-sh/nvm) / [fnm](https://github.com/Schniz/fnm) |
-| pnpm | ≥ 8 | `npm i -g pnpm` |
-| Rust | 1.79.0 | [rustup](https://rustup.rs) |
-| Foundry | latest | `curl -L https://foundry.paradigm.xyz \| bash && foundryup` |
-| Circom | 2.1.6 | see `scripts/install-circom.sh` |
-| Docker | ≥ 24 | [docker.com](https://www.docker.com/) |
-| Python | 3.11 | [python.org](https://python.org) |
+| pnpm    | ≥ 8     | `npm i -g pnpm`                                                             |
+| Rust    | 1.79.0  | [rustup](https://rustup.rs)                                                 |
+| Foundry | latest  | `curl -L https://foundry.paradigm.xyz \| bash && foundryup`                 |
+| Circom  | 2.1.6   | see `scripts/install-circom.sh`                                             |
+| Docker  | ≥ 24    | [docker.com](https://www.docker.com/)                                       |
+| Python  | 3.11    | [python.org](https://python.org)                                            |
 
 ---
 
@@ -145,13 +145,13 @@ snarkjs zkey export verificationkey keys/credential_final.zkey keys/verification
 
 ## 7. Troubleshooting
 
-| Symptom | Fix |
-|---|---|
-| `pnpm install` fails | delete `node_modules` and `pnpm-lock.yaml`, retry |
-| `forge: command not found` | re-run `foundryup` and `source ~/.bashrc` |
-| Soroban build fails | `rustup target add wasm32-unknown-unknown` |
-| Circom errors | ensure `cargo` is installed before `./circom` build |
-| Docker compose fails | check `.env` for missing values, run `docker compose config` |
+| Symptom                          | Fix                                                              |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `pnpm install` fails             | delete `node_modules` and `pnpm-lock.yaml`, retry                |
+| `forge: command not found`       | re-run `foundryup` and `source ~/.bashrc`                        |
+| Soroban build fails              | `rustup target add wasm32-unknown-unknown`                       |
+| Circom errors                    | ensure `cargo` is installed before `./circom` build              |
+| Docker compose fails             | check `.env` for missing values, run `docker compose config`     |
 | Bridge relayer logs `headBehind` | Horizon is on a fork — restart the relayer after the rpc catchup |
 
 ---

@@ -6,14 +6,14 @@ End-to-end overview of every subsystem in the SSI platform.
 
 ## 1. Goals
 
-| Goal | How it is achieved |
-|---|---|
-| Identity owned by the user, not a state or corporation | Soroban registry keyed by the user's wallet; private keys never leave the user's wallet |
-| Selective disclosure | Circom zero-knowledge circuits prove properties (age, citizenship, credential ownership) without revealing the underlying data |
-| Works across borders | Bridge relayer wraps EVM-issued Soulbound badges as Stellar-native wrapped assets |
-| Recoverable | Social-recovery contract with M-of-N trusted guardians |
-| Auditable but private | Encrypted attestations pinned to IPFS, content-addressed by CIDs referenced from on-chain credentials |
-| Resistant to fraud | Python ML service flags sybil / credential-stuffing patterns in real time |
+| Goal                                                   | How it is achieved                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Identity owned by the user, not a state or corporation | Soroban registry keyed by the user's wallet; private keys never leave the user's wallet                                        |
+| Selective disclosure                                   | Circom zero-knowledge circuits prove properties (age, citizenship, credential ownership) without revealing the underlying data |
+| Works across borders                                   | Bridge relayer wraps EVM-issued Soulbound badges as Stellar-native wrapped assets                                              |
+| Recoverable                                            | Social-recovery contract with M-of-N trusted guardians                                                                         |
+| Auditable but private                                  | Encrypted attestations pinned to IPFS, content-addressed by CIDs referenced from on-chain credentials                          |
+| Resistant to fraud                                     | Python ML service flags sybil / credential-stuffing patterns in real time                                                      |
 
 ---
 
@@ -129,9 +129,11 @@ Each call emits a Soroban event consumed by the bridge relayer (via Horizon SSE)
 
 ```solidity
 // IdentitySBT  — ERC-721 with `_beforeTokenTransfer` overridden to reject transfers
-contract IdentitySBT is ERC721SBT {  // openzeppelin SBT base
-    function issueCredential(address holder, bytes32 schema, string calldata cid) external onlyIssuer;
-    function revokeCredential(uint256 tokenId) external onlyIssuer;
+contract IdentitySBT is
+  ERC721SBT // openzeppelin SBT base
+{
+  function issueCredential(address holder, bytes32 schema, string calldata cid) external onlyIssuer;
+  function revokeCredential(uint256 tokenId) external onlyIssuer;
 }
 
 // IdentityRegistry
@@ -139,35 +141,35 @@ function registerIdentity(bytes32 commitment, address[] calldata guardians) exte
 function attest(address subject, bytes32 schemaHash) external onlyIssuer;
 
 // WrappedBadge (Bridge)
-function lockAndNotify(bytes calldata stellarPubkey, uint256 badgeId) external;  // burns SBT, emits LockEvent
+function lockAndNotify(bytes calldata stellarPubkey, uint256 badgeId) external; // burns SBT, emits LockEvent
 ```
 
 ---
 
 ## 5. Privacy Model
 
-| Data | Where it lives | Who reads it |
-|---|---|---|
-| Wallet private key | User device | Only the user |
-| Biometric template | Inside WebAuthn enclave, then `biometric_commitment` (hash) on-chain | Nobody — only proves the user is consistent |
-| Encrypted profile | IPFS (AES-GCM, key derived from wallet signature) | User + authorized viewers |
-| Credential | IPFS (CID), reference on chain | Issuer, holder, anyone with a valid presentation |
-| Identity NFT | Public (Soroban) | Public — but only references commitments/CIDs |
-| Wrapped badge | Public (Soroban asset) | Public |
-| ZK proof | Public (Soroban `verify_proof`) | Anyone — proves a property, reveals nothing |
+| Data               | Where it lives                                                       | Who reads it                                     |
+| ------------------ | -------------------------------------------------------------------- | ------------------------------------------------ |
+| Wallet private key | User device                                                          | Only the user                                    |
+| Biometric template | Inside WebAuthn enclave, then `biometric_commitment` (hash) on-chain | Nobody — only proves the user is consistent      |
+| Encrypted profile  | IPFS (AES-GCM, key derived from wallet signature)                    | User + authorized viewers                        |
+| Credential         | IPFS (CID), reference on chain                                       | Issuer, holder, anyone with a valid presentation |
+| Identity NFT       | Public (Soroban)                                                     | Public — but only references commitments/CIDs    |
+| Wrapped badge      | Public (Soroban asset)                                               | Public                                           |
+| ZK proof           | Public (Soroban `verify_proof`)                                      | Anyone — proves a property, reveals nothing      |
 
 ---
 
 ## 6. Failure Modes
 
-| Failure | Mitigation |
-|---|---|
-| Bridge relayer crashes | Idempotent relayer; restart from last consumed block; Postgres-backed state |
-| Soroban RPC outage | Frontend caches last-known identity snapshot in localStorage (encrypted) |
-| IPFS pinning fails | Retry queue (BullMQ + Redis); fall back to Filecoin / Arweave via pluggable pinner |
-| AI fraud service down | Soft-fail open-but-flag; manual review queue for new identities |
-| Lost wallet | Social recovery (M-of-N guardians) |
-| Biometric spoof | WebAuthn enclave + liveness challenge + ML fraud scoring |
+| Failure                | Mitigation                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| Bridge relayer crashes | Idempotent relayer; restart from last consumed block; Postgres-backed state        |
+| Soroban RPC outage     | Frontend caches last-known identity snapshot in localStorage (encrypted)           |
+| IPFS pinning fails     | Retry queue (BullMQ + Redis); fall back to Filecoin / Arweave via pluggable pinner |
+| AI fraud service down  | Soft-fail open-but-flag; manual review queue for new identities                    |
+| Lost wallet            | Social recovery (M-of-N guardians)                                                 |
+| Biometric spoof        | WebAuthn enclave + liveness challenge + ML fraud scoring                           |
 
 ---
 

@@ -2,14 +2,14 @@
 
 Soroban (Rust) smart contracts for the Self-Sovereign Identity platform — the **primary on-chain identity registry** of the system.
 
-| Module | Purpose |
-|---|---|
-| `identity.rs` | The core **IdentityRegistry** — stores public keys, biometric commitments, recovery owners |
-| `credentials.rs` | Issue / reveal / revoke educational, employment and medical credentials with CIDs |
-| `wrapped_badge.rs` | Wraps cross-chain Soulbound badges as Stellar-native wrapped assets |
-| `social_recovery.rs` | M-of-N guardian-based recovery flow |
-| `storage.rs` | Typed storage helpers with TTL |
-| `test.rs` | On-chain integration tests for the whole contract |
+| Module               | Purpose                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| `identity.rs`        | The core **IdentityRegistry** — stores public keys, biometric commitments, recovery owners |
+| `credentials.rs`     | Issue / reveal / revoke educational, employment and medical credentials with CIDs          |
+| `wrapped_badge.rs`   | Wraps cross-chain Soulbound badges as Stellar-native wrapped assets                        |
+| `social_recovery.rs` | M-of-N guardian-based recovery flow                                                        |
+| `storage.rs`         | Typed storage helpers with TTL                                                             |
+| `test.rs`            | On-chain integration tests for the whole contract                                          |
 
 This contract suite is intended to be deployed to **Stellar Testnet (and eventually Mainnet)** via Soroban CLI / SDK.
 
@@ -44,6 +44,7 @@ pub struct Credential {
 ```
 
 Events emitted:
+
 - `IdentityCreated(pubkey, commitment)`
 - `CredentialIssued(subject, schema_hash, cid)`
 - `BadgeWrapped(subject, source_chain, source_tx)`

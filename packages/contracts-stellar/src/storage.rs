@@ -25,16 +25,22 @@ pub enum DataKey {
     WrappedBadge(BytesN<32>, u32, BytesN<32>),
     /// Admin address (the deployer) — used for permissioned operations.
     Admin,
+    /// Issuer allowlist entry.
+    IssuerAllowlist(Address),
 }
 
 /// Extend the TTL of every stored entry related to a user.
 pub fn touch_identity(env: &Env, owner: &BytesN<32>) {
-    env.storage()
-        .persistent()
-        .extend_ttl(DataKey::Identity(owner.clone()), IDENTITY_TTL, IDENTITY_TTL);
-    env.storage()
-        .persistent()
-        .extend_ttl(DataKey::CredIndex(owner.clone()), IDENTITY_TTL, IDENTITY_TTL);
+    env.storage().persistent().extend_ttl(
+        &DataKey::Identity(owner.clone()),
+        IDENTITY_TTL,
+        IDENTITY_TTL,
+    );
+    env.storage().persistent().extend_ttl(
+        &DataKey::CredIndex(owner.clone()),
+        IDENTITY_TTL,
+        IDENTITY_TTL,
+    );
 }
 
 /// Helper that lets modules emit a structured event.
@@ -45,7 +51,7 @@ pub fn touch_identity(env: &Env, owner: &BytesN<32>) {
 /// implements `IntoVal<Env, Val>`, which tuples do but slices do not.
 pub fn emit_event<T, V>(env: &Env, topics: T, value: V)
 where
-    T: IntoVal<Env, Val>,
+    T: IntoVal<Env, Val> + soroban_sdk::events::Topics,
     V: IntoVal<Env, Val>,
 {
     env.events().publish(topics, value);

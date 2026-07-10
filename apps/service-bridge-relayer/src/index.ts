@@ -7,8 +7,8 @@
 
 import pino from "pino";
 import { startStellarListener } from "./listeners/stellar.js";
-import { startEvmListener }     from "./listeners/evm.js";
-import { startHorizonStream }   from "./horizon/client.js";
+import { startEvmListener } from "./listeners/evm.js";
+import { startHorizonStream } from "./horizon/client.js";
 
 const log = pino({ level: process.env.LOG_LEVEL ?? "info" });
 
@@ -22,4 +22,7 @@ async function main() {
   log.info("✅ Relayer running");
 }
 
-main().catch((err) => { log.error(err); process.exit(1); });
+main().catch((err) => {
+  log.error(err);
+  process.exit(1);
+});

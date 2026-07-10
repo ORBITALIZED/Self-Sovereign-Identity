@@ -10,7 +10,7 @@
 //!  3. We mint a Stellar asset the holder can spend / present on Stellar-native
 //!     apps, or `unwrap_badge` it back to its origin chain.
 
-use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, String};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, String};
 
 use crate::storage::{emit_event, DataKey};
 
@@ -60,7 +60,7 @@ impl WrappedBadgeContract {
         let badge = WrappedBadge {
             subject_pubkey: subject_pubkey.clone(),
             source_chain_id,
-            source_tx_hash,
+            source_tx_hash: source_tx_hash.clone(),
             cid,
             asset_code: asset_code.clone(),
             status: WrappedBadgeStatus::Active,
@@ -76,12 +76,7 @@ impl WrappedBadgeContract {
         emit_event(
             &env,
             ("badge_wrapped",),
-            (
-                subject_pubkey,
-                source_chain_id,
-                source_tx_hash,
-                asset_code,
-            ),
+            (subject_pubkey, source_chain_id, source_tx_hash, asset_code),
         );
         true
     }
@@ -141,8 +136,8 @@ fn build_asset_code(env: &Env, schema_hash: &BytesN<32>) -> String {
     let mut buf = *b"WID-00000000";
     let raw = schema_hash.to_array();
     for i in 0..4 {
-        buf[4 + i * 2]     = nibble_to_hex((raw[i] >> 4) & 0x0f);
-        buf[4 + i * 2 + 1] = nibble_to_hex(raw[i]        & 0x0f);
+        buf[4 + i * 2] = nibble_to_hex((raw[i] >> 4) & 0x0f);
+        buf[4 + i * 2 + 1] = nibble_to_hex(raw[i] & 0x0f);
     }
     // Safety: every byte came either from an ASCII literal or nibble_to_hex,
     // so the buffer is always valid UTF-8.
@@ -151,7 +146,7 @@ fn build_asset_code(env: &Env, schema_hash: &BytesN<32>) -> String {
 
 fn nibble_to_hex(n: u8) -> u8 {
     match n {
-        0..=9   => b'0' + n,
+        0..=9 => b'0' + n,
         10..=15 => b'A' + (n - 10),
         _ => b'0',
     }

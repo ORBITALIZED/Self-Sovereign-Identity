@@ -23,37 +23,42 @@ export async function startEvmListener() {
 
   while (true) {
     const current = await client.getBlockNumber();
-    if (current <= lastBlock) { await wait(4000); continue; }
+    if (current <= lastBlock) {
+      await wait(4000);
+      continue;
+    }
 
     const logs = await client.getLogs({
       address: process.env.EVM_BRIDGE_CONTRACT as `0x${string}`,
-      events:  ABI,
+      events: ABI,
       fromBlock: lastBlock + 1n,
-      toBlock:   current,
+      toBlock: current,
     });
 
     for (const log of logs) {
       const args = log.args as {
-        holder:                `0x${string}`;
-        schemaHash:            `0x${string}`;
-        tokenId:               bigint;
-        destinationChainId:    number;
-        stellarPubKeyXdrHash:  `0x${string}`;
+        holder: `0x${string}`;
+        schemaHash: `0x${string}`;
+        tokenId: bigint;
+        destinationChainId: number;
+        stellarPubKeyXdrHash: `0x${string}`;
       };
       // 1. fraud check
-      const score = await fetch(`${process.env.AI_FRAUD_URL}/score`, {
-        method:  "POST",
+      const scoreRes = await fetch(`${process.env.AI_FRAUD_URL}/score`, {
+        method: "POST",
         headers: { "content-type": "application/json" },
-        body:    JSON.stringify({ subject: args.holder, schemaHash: args.schemaHash }),
-      }).then((r) => r.json()).catch(() => ({ score: 0 }));
+        body: JSON.stringify({ subject: args.holder, schemaHash: args.schemaHash }),
+      })
+        .then((r) => r.json() as Promise<{ score: number }>)
+        .catch<{ score: number }>(() => ({ score: 0 }));
 
-      if (score.score > Number(process.env.AI_FRAUD_THRESHOLD ?? "0.85")) {
+      if (scoreRes.score > Number(process.env.AI_FRAUD_THRESHOLD ?? "0.85")) {
         console.warn(`AI fraud rejected lock for ${args.holder}`);
         continue;
       }
 
       // 2. submit wrap_badge to Soroban — left as a TODO bound to the SDK
-      console.log(`[relayer] would wrap for ${args.holder} score=${score.score}`);
+      console.log(`[relayer] would wrap for ${args.holder} score=${scoreRes.score}`);
     }
     lastBlock = current;
   }

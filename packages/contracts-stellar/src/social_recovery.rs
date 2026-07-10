@@ -8,9 +8,7 @@
 //! NOTE: soroban-sdk v20 does **not** expose an `auth::Signature` type.
 //! Ed25519 signature verification is performed via `env.crypto().ed25519_verify`.
 
-use soroban_sdk::{
-    contract, contractimpl, Bytes, BytesN, Env, Vec,
-};
+use soroban_sdk::{contract, contractimpl, Bytes, BytesN, Env, Vec};
 
 #[contract]
 pub struct SocialRecoveryContract;
@@ -30,9 +28,10 @@ impl SocialRecoveryContract {
         if threshold == 0 || threshold > guardians.len() {
             panic!("invalid threshold");
         }
-        env.storage()
-            .persistent()
-            .set(&crate::storage::DataKey::Recovery(subject), &(guardians, threshold));
+        env.storage().persistent().set(
+            &crate::storage::DataKey::Recovery(subject),
+            &(guardians, threshold),
+        );
         true
     }
 

@@ -16,19 +16,28 @@ export default function WalletConnect({ embedded = false }: { embedded?: boolean
         </p>
         <div className="grid grid-cols-2 gap-3">
           <Button onClick={() => connect("freighter")}>Freighter (Stellar)</Button>
-          <Button variant="secondary" onClick={() => connect("metamask")}>MetaMask (EVM)</Button>
+          <Button variant="secondary" onClick={() => connect("metamask")}>
+            MetaMask (EVM)
+          </Button>
         </div>
       </div>
     );
   }
 
   if (!address) {
-    return <Button onClick={() => setOpen(true)} icon={<Wallet className="w-4 h-4" />}>Connect</Button>;
+    return (
+      <Button onClick={() => setOpen(true)} icon={<Wallet className="w-4 h-4" />}>
+        Connect
+      </Button>
+    );
   }
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)} className="surface-card px-4 py-2 text-sm flex items-center gap-2">
+      <button
+        onClick={() => setOpen(!open)}
+        className="surface-card px-4 py-2 text-sm flex items-center gap-2"
+      >
         <span className={isStellar ? "pulse-dot" : "pulse-dot bg-yellow-400"} />
         {address.slice(0, 4)}…{address.slice(-4)}
       </button>

@@ -9,8 +9,8 @@ ENV VITE_API_URL=${VITE_API_URL} \
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@8.15.4 --activate
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json ./
+RUN pnpm install
 COPY . .
 RUN pnpm build
 

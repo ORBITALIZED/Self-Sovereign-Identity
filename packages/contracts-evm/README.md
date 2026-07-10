@@ -2,12 +2,12 @@
 
 Solidity smart contracts (Foundry-based) for issuing Identity Soulbound Tokens (SBTs) on EVM chains. These tokens are the **source side** of the cross-chain wrapped-badge flow that lands on Stellar.
 
-| Contract | Purpose |
-|---|---|
-| `IdentitySBT.sol` | ERC-721 with `_update` overridden to make it **non-transferable** (soulbound) |
-| `IdentityRegistry.sol` | Maps `(issuer, schema)` → status; centralised registry of authorised issuers |
-| `WrappedBadge.sol` | Bridge contract that burns an SBT and emits `Lock` for the Stellar relayer |
-| `interfaces/IIdentity.sol` | Common interface implemented by every contract |
+| Contract                   | Purpose                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `IdentitySBT.sol`          | ERC-721 with `_update` overridden to make it **non-transferable** (soulbound) |
+| `IdentityRegistry.sol`     | Maps `(issuer, schema)` → status; centralised registry of authorised issuers  |
+| `WrappedBadge.sol`         | Bridge contract that burns an SBT and emits `Lock` for the Stellar relayer    |
+| `interfaces/IIdentity.sol` | Common interface implemented by every contract                                |
 
 ## Layout
 
@@ -38,7 +38,7 @@ forge script script/Deploy.s.sol \
 
 ## Notes
 
-* Uses **OpenZeppelin v5** for ERC-721 base.
-* `WrappedBadge` is **the only contract that can burn SBTs** — by design.
-* The bridge relayer (`apps/service-bridge-relayer`) listens to the
+- Uses **OpenZeppelin v5** for ERC-721 base.
+- `WrappedBadge` is **the only contract that can burn SBTs** — by design.
+- The bridge relayer (`apps/service-bridge-relayer`) listens to the
   `BadgeLocked(subject, cid, sourceChainId, sourceTxHash)` event.

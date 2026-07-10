@@ -23,8 +23,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "clean": "turbo run clean && rimraf .turbo node_modules",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,sol,rs,py}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,sol,rs,py}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,sol}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,sol}\"",
     "typecheck": "turbo run typecheck",
     "contracts:build:stellar": "make -C packages/contracts-stellar build",
     "contracts:build:evm": "forge build --root packages/contracts-evm",
@@ -35,6 +35,7 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "prettier": "^3.2.5",
+    "prettier-plugin-solidity": "^1.4.0",
     "rimraf": "^5.0.5",
     "turbo": "^1.13.0",
     "typescript": "^5.4.5"

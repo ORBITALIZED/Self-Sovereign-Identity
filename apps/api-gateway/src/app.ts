@@ -34,10 +34,10 @@ export async function build(opts: { jwtSecret: string } = { jwtSecret: "dev" }) 
   await app.register(swaggerUI, { routePrefix: "/docs" });
 
   // Mount routes
-  await app.register(healthRoutes,     { prefix: "" });
-  await app.register(identityRoutes,    { prefix: "/identity" });
+  await app.register(healthRoutes, { prefix: "" });
+  await app.register(identityRoutes, { prefix: "/identity" });
   await app.register(credentialsRoutes, { prefix: "/credentials" });
-  await app.register(zkpRoutes,         { prefix: "/zkp" });
+  await app.register(zkpRoutes, { prefix: "/zkp" });
 
   app.setErrorHandler(errorHandler);
 

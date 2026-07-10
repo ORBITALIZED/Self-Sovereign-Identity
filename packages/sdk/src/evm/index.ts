@@ -14,26 +14,32 @@ export class SSIEvm {
     this.publicClient = createPublicClient({ transport: http(config.rpcUrl) });
   }
 
-  registry    = new RegistryContract(this);
-  sbt         = new SBTContract(this);
-  bridge      = new BridgeContract(this);
+  registry = new RegistryContract(this);
+  sbt = new SBTContract(this);
+  bridge = new BridgeContract(this);
 
   /** Attach a wallet client (e.g. created from a wagmi connector). */
-  setWallet(wallet: WalletClient) { void wallet; /* for later use */ }
+  setWallet(wallet: WalletClient) {
+    void wallet; /* for later use */
+  }
 }
 
 class RegistryContract {
   constructor(private p: SSIEvm) {}
   async isIssuer(addr: EvmAddress): Promise<boolean> {
     // abi.encode call + read
-    void this.p; void addr; return false;
+    void this.p;
+    void addr;
+    return false;
   }
 }
 
 class SBTContract {
   constructor(private p: SSIEvm) {}
   async balanceOf(owner: EvmAddress): Promise<bigint> {
-    void this.p; void owner; return 0n;
+    void this.p;
+    void owner;
+    return 0n;
   }
 }
 

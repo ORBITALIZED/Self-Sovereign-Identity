@@ -44,8 +44,8 @@ export default function Layout({ children }: { children: ReactNode }) {
 }
 
 const NAV = [
-  { to: "/",              label: "Dashboard",    icon: Shield      },
-  { to: "/identity/new",  label: "New Identity", icon: KeyRound    },
-  { to: "/credentials",   label: "Credentials",  icon: BadgeCheck  },
-  { to: "/bridge",        label: "Bridge",       icon: Activity    },
+  { to: "/", label: "Dashboard", icon: Shield },
+  { to: "/identity/new", label: "New Identity", icon: KeyRound },
+  { to: "/credentials", label: "Credentials", icon: BadgeCheck },
+  { to: "/bridge", label: "Bridge", icon: Activity },
 ] as const;

@@ -12,21 +12,25 @@ async function snarkjs() {
 }
 
 export interface ZKInputs {
-  wasm:  string;            // path to .wasm
-  zkey:  string;            // path to .zkey
+  wasm: string; // path to .wasm
+  zkey: string; // path to .zkey
   input: Record<string, unknown>;
 }
 
 export interface ZKProof {
-  pi_a:      string[];
-  pi_b:      string[][];
-  pi_c:      string[];
-  protocol:  string;
-  curve:     string;
+  pi_a: string[];
+  pi_b: string[][];
+  pi_c: string[];
+  protocol: string;
+  curve: string;
 }
 
 export class SSIZkp {
-  async prove({ wasm, zkey, input }: ZKInputs): Promise<{ proof: ZKProof; publicSignals: string[] }> {
+  async prove({
+    wasm,
+    zkey,
+    input,
+  }: ZKInputs): Promise<{ proof: ZKProof; publicSignals: string[] }> {
     try {
       const s = await snarkjs();
       return await s.groth16.fullProve(input, wasm, zkey);

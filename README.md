@@ -21,18 +21,18 @@ This platform gives every human a **cryptographically owned, privacy-preserving 
 
 ## ✨ Features
 
-| Feature | Status | Implemented In |
-|---|---|---|
-| Self-owned digital identity wallet | ✅ Scaffold | `apps/frontend`, `packages/sdk` |
-| Biometric verification (off-chain) | ✅ Scaffold | `apps/service-ipfs` |
-| Zero-knowledge proof authentication | ✅ Scaffold | `packages/zk-circuits`, `packages/sdk` |
-| Educational & employment certificates | ✅ Scaffold | `packages/contracts-stellar` |
-| Medical identity integration | ✅ Scaffold | `apps/api-gateway` |
-| Cross-border verification | ✅ Scaffold | `apps/service-bridge-relayer` |
-| Recovery through trusted guardians | ✅ Scaffold | `packages/contracts-stellar/src/social_recovery.rs` |
-| NFT-based identity badges | ✅ Scaffold | `packages/contracts-evm/src/IdentitySBT.sol`, `packages/contracts-stellar/src/wrapped_badge.rs` |
-| Privacy controls | ✅ Scaffold | `packages/zk-circuits` |
-| AI-powered fraud detection | ✅ Scaffold | `apps/service-ai-fraud` |
+| Feature                               | Status      | Implemented In                                                                                  |
+| ------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
+| Self-owned digital identity wallet    | ✅ Scaffold | `apps/frontend`, `packages/sdk`                                                                 |
+| Biometric verification (off-chain)    | ✅ Scaffold | `apps/service-ipfs`                                                                             |
+| Zero-knowledge proof authentication   | ✅ Scaffold | `packages/zk-circuits`, `packages/sdk`                                                          |
+| Educational & employment certificates | ✅ Scaffold | `packages/contracts-stellar`                                                                    |
+| Medical identity integration          | ✅ Scaffold | `apps/api-gateway`                                                                              |
+| Cross-border verification             | ✅ Scaffold | `apps/service-bridge-relayer`                                                                   |
+| Recovery through trusted guardians    | ✅ Scaffold | `packages/contracts-stellar/src/social_recovery.rs`                                             |
+| NFT-based identity badges             | ✅ Scaffold | `packages/contracts-evm/src/IdentitySBT.sol`, `packages/contracts-stellar/src/wrapped_badge.rs` |
+| Privacy controls                      | ✅ Scaffold | `packages/zk-circuits`                                                                          |
+| AI-powered fraud detection            | ✅ Scaffold | `apps/service-ai-fraud`                                                                         |
 
 ---
 

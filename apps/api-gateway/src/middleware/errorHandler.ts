@@ -1,10 +1,6 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 
-export async function errorHandler(
-  err: FastifyError,
-  req: FastifyRequest,
-  reply: FastifyReply,
-) {
+export async function errorHandler(err: FastifyError, req: FastifyRequest, reply: FastifyReply) {
   req.log.error(err);
 
   const status = err.statusCode ?? 500;

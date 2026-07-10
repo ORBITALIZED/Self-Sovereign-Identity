@@ -16,8 +16,16 @@ export const api = {
       if (r.status === 404) return null;
       return j(r);
     },
-    async create(body: { biometricCommitment: string; metadataCid: string; recoveryOwners: string[] }) {
-      const r = await fetch(`${BASE}/identity`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    async create(body: {
+      biometricCommitment: string;
+      metadataCid: string;
+      recoveryOwners: string[];
+    }) {
+      const r = await fetch(`${BASE}/identity`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
       return j<{ txHash: string }>(r);
     },
   },
@@ -28,7 +36,13 @@ export const api = {
   },
   fraud: {
     async score(subject: string) {
-      return j<{ score: number }>(await fetch(`${BASE}/fraud/score`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subject }) }));
+      return j<{ score: number }>(
+        await fetch(`${BASE}/fraud/score`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ subject }),
+        }),
+      );
     },
   },
 };

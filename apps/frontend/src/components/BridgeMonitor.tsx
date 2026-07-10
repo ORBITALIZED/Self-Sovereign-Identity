@@ -26,10 +26,16 @@ export default function BridgeMonitor() {
     const t = setInterval(() => {
       const e: Event = {
         id: Math.random().toString(36).slice(2, 10),
-        subject: "G" + Math.random().toString(36).toUpperCase().repeat(55 / 36).slice(0, 55),
+        subject:
+          "G" +
+          Math.random()
+            .toString(36)
+            .toUpperCase()
+            .repeat(55 / 36)
+            .slice(0, 55),
         sourceChainId: 80002,
         sourceTxHash: Math.random().toString(16).slice(2).padEnd(64, "0").slice(0, 64),
-        assetCode:    "WID-" + Math.random().toString(16).slice(2, 10).toUpperCase().padEnd(8, "0"),
+        assetCode: "WID-" + Math.random().toString(16).slice(2, 10).toUpperCase().padEnd(8, "0"),
         ts: Date.now(),
       };
       setEvents((xs) => [e, ...xs].slice(0, 30));
@@ -50,16 +56,22 @@ export default function BridgeMonitor() {
 
       <div className="divide-y divide-surface-700 max-h-[420px] overflow-auto">
         {events.length === 0 && (
-          <div className="px-6 py-8 text-sm text-slate-400">Waiting for the first wrapped badge…</div>
+          <div className="px-6 py-8 text-sm text-slate-400">
+            Waiting for the first wrapped badge…
+          </div>
         )}
         {events.map((e) => (
           <div key={e.id} className="px-6 py-3 flex items-center gap-3 text-sm">
-            <span className="font-mono text-slate-200">{e.subject.slice(0, 4)}…{e.subject.slice(-4)}</span>
+            <span className="font-mono text-slate-200">
+              {e.subject.slice(0, 4)}…{e.subject.slice(-4)}
+            </span>
             <ArrowRight className="w-4 h-4 text-slate-500" />
             <span className="text-brand-500">{FAKE_CHAIN[e.sourceChainId] ?? e.sourceChainId}</span>
             <span className="text-xs text-slate-500">via</span>
             <code className="text-xs text-slate-300">{e.assetCode}</code>
-            <span className="ml-auto text-xs text-slate-500">{new Date(e.ts).toLocaleTimeString()}</span>
+            <span className="ml-auto text-xs text-slate-500">
+              {new Date(e.ts).toLocaleTimeString()}
+            </span>
           </div>
         ))}
       </div>

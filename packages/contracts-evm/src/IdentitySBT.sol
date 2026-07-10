@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IIdentity} from "./interfaces/IIdentity.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IIdentity } from "./interfaces/IIdentity.sol";
 
 /// @title IdentitySBT — Soulbound Identity Badge
 /// @notice ERC-721 whose transfers are blocked (only mint/burn by issuer).
@@ -26,10 +26,10 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
 
     struct Credential {
         bytes32 schemaHash;
-        string  cid;
-        uint64  issuedAt;
-        uint64  validUntil;
-        bool    revoked;
+        string cid;
+        uint64 issuedAt;
+        uint64 validUntil;
+        bool revoked;
     }
 
     mapping(uint256 => Credential) public credentials;
@@ -55,7 +55,7 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
         address holder,
         bytes32 schemaHash,
         string calldata cid,
-        uint64  validUntil
+        uint64 validUntil
     ) external onlyRole(ISSUER_ROLE) returns (uint256 tokenId) {
         if (!schemas[schemaHash]) revert UnknownSchema(schemaHash);
         if (holderSchemaToken[holder][schemaHash] != 0) {
@@ -93,8 +93,8 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
     }
 
     /// @notice Optional allow-list endpoint (e.g. for the bridge to burn).
-    function bridgeBurn(uint256 tokenId) external {
-        // who can burn? see WrappedBadge which has role ISSUER_ROLE
+    /// @dev Restricted to ISSUER_ROLE so only authorised bridges can burn.
+    function bridgeBurn(uint256 tokenId) external onlyRole(ISSUER_ROLE) {
         _burn(tokenId);
     }
 
@@ -116,12 +116,9 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
 
     /// @dev ERC721 and AccessControl both declare supportsInterface; we must
     ///      provide an explicit override that delegates to both.
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

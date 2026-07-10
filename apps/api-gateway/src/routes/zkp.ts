@@ -1,6 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { SSIZkp } from "@ssi/sdk/zkp";
+// Note: Sub-path exports (@ssi/sdk/stellar, @ssi/sdk/zkp) require the SDK
+// to be built first. Import from barrel until SDK is compiled.
+import { SSIZkp } from "@ssi/sdk";
 import fs from "node:fs";
 
 const zkp = new SSIZkp();

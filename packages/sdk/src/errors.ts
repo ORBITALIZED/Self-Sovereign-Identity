@@ -4,8 +4,8 @@
 
 export class SSIError extends Error {
   readonly code: string;
-  constructor(code: string, message: string, public readonly cause?: unknown) {
-    super(message);
+  constructor(code: string, message: string, cause?: unknown) {
+    super(message, cause ? { cause } : undefined);
     this.name = "SSIError";
     this.code = code;
   }
@@ -33,7 +33,10 @@ export class UnauthorizedIssuerError extends SSIError {
 }
 
 export class ZKProofError extends SSIError {
-  constructor(message: string) { super("ZK_PROOF_ERROR", message); this.name = "ZKProofError"; }
+  constructor(message: string) {
+    super("ZK_PROOF_ERROR", message);
+    this.name = "ZKProofError";
+  }
 }
 
 export class ChainConnectionError extends SSIError {

@@ -8,7 +8,7 @@
 //! soroban-sdk v20 — they are distinct types.  The `Credential` struct now
 //! stores `issuer` as `Address` directly.
 
-use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, String, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, String, Vec};
 
 use crate::storage::{emit_event, DataKey, CREDENTIAL_TTL};
 
@@ -29,12 +29,25 @@ pub struct CredentialsIssuer;
 #[contractimpl]
 impl CredentialsIssuer {
     /// Allow an address to act as credential issuer (caller = admin).
-    pub fn authorize_issuer(env: Env, issuer: Address) {
+    /// Issuers are tracked in a separate storage key (IssuerAllowlist),
+    /// NOT by overwriting DataKey::Admin.
+    pub fn authorize_issuer(env: Env, caller: Address, issuer: Address) {
         let admin = crate::storage::require_admin(&env);
-        admin.require_auth();
+        caller.require_auth();
+        if caller != admin {
+            panic!("only admin can authorize issuers");
+        }
         env.storage()
             .instance()
-            .set(&DataKey::Admin, &issuer); // reuse Admin key — single registry
+            .set(&DataKey::IssuerAllowlist(issuer), &true);
+    }
+
+    /// Check if an address is an allowed issuer.
+    pub fn is_authorized_issuer(env: Env, issuer: Address) -> bool {
+        env.storage()
+            .instance()
+            .get::<DataKey, bool>(&DataKey::IssuerAllowlist(issuer))
+            .unwrap_or(false)
     }
 
     /// Issue a credential (caller must be an authorized issuer).
@@ -78,11 +91,7 @@ impl CredentialsIssuer {
             .persistent()
             .set(&DataKey::CredIndex(subject.clone()), &idx);
 
-        emit_event(
-            &env,
-            ("credential_issued",),
-            (issuer, subject, schema_hash),
-        );
+        emit_event(&env, ("credential_issued",), (issuer, subject, schema_hash));
         true
     }
 
@@ -108,7 +117,11 @@ impl CredentialsIssuer {
         cred.revoked = true;
         env.storage().persistent().set(&key, &cred);
 
-        emit_event(&env, ("credential_revoked",), (issuer, subject, schema_hash));
+        emit_event(
+            &env,
+            ("credential_revoked",),
+            (issuer, subject, schema_hash),
+        );
         true
     }
 

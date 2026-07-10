@@ -4,17 +4,17 @@
 
 import { EventEmitter } from "eventemitter3";
 import { setTimeout as wait } from "node:timers/promises";
-import type { BadgeWrappedEvent } from "@ssi/sdk";
 
 const HORIZON = process.env.STELLAR_HORIZON_URL ?? "";
 
 export class HorizonStream extends EventEmitter {
   private cursor: string | undefined;
 
-  async *iter(trigger: string): AsyncGenerator<{ cursor: string; event: any }> {
+  async startListening(trigger: string): Promise<void> {
     while (true) {
-      const url = new URL(`${HORIZON}/events?topic=${trigger}` +
-        (this.cursor ? `&cursor=${this.cursor}` : ""));
+      const url = new URL(
+        `${HORIZON}/events?topic=${trigger}` + (this.cursor ? `&cursor=${this.cursor}` : ""),
+      );
       const res = await fetch(url, { headers: { Accept: "text/event-stream" } });
       if (!res.ok || !res.body) {
         await wait(1000);
@@ -30,8 +30,6 @@ export class HorizonStream extends EventEmitter {
 
 const stream = new HorizonStream();
 export async function startHorizonStream() {
-  stream.iter("contract").on?.("event", (e) => {
-    // forward to ws clients of the api-gateway
-    void e;
-  });
+  // Start listening; events will be emitted on the stream EventEmitter
+  void stream.startListening("contract");
 }

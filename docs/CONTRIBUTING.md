@@ -85,7 +85,7 @@ Email **security@ssi.example** — do **not** file a public GitHub issue.
 Drafts for upstream trackers live in `docs/upstream-issue-drafts/`.
 They are **not** auto-filed — file from your own GitHub identity if/when you take them public.
 
-| Draft                                                                                | Upstream repo           | What it anchors on                                      |
-| ------------------------------------------------------------------------------------ | ----------------------- | ------------------------------------------------------- |
-| `docs/upstream-issue-drafts/rs-stellar-xdr-arbitrary-regression.md`                  | `stellar/rs-stellar-xdr` | bug-origin: `#[derive(Arbitrary)]` calls `try_size_hint` |
-| `docs/upstream-issue-drafts/rs-soroban-sdk-arbitrary-regression.md`                  | `stellar/rs-soroban-sdk` | consumer-side: 20.0.0 `cargo test` regression          |
+| Draft                                                               | Upstream repo            | What it anchors on                                       |
+| ------------------------------------------------------------------- | ------------------------ | -------------------------------------------------------- |
+| `docs/upstream-issue-drafts/rs-stellar-xdr-arbitrary-regression.md` | `stellar/rs-stellar-xdr` | bug-origin: `#[derive(Arbitrary)]` calls `try_size_hint` |
+| `docs/upstream-issue-drafts/rs-soroban-sdk-arbitrary-regression.md` | `stellar/rs-soroban-sdk` | consumer-side: 20.0.0 `cargo test` regression            |

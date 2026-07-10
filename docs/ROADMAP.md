@@ -4,7 +4,7 @@ A transparent view of where the project is heading.
 
 ---
 
-## Phase 1 — Scaffold ✅  (this PR)
+## Phase 1 — Scaffold ✅ (this PR)
 
 - [x] Poly-repo workspace
 - [x] Soroban contract skeleton (identity, credentials, wrapped badge, social recovery)

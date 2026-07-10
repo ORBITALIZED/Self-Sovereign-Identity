@@ -17,10 +17,14 @@ export async function startStellarListener() {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
-      const url = `${HORIZON}/contracts/${CONTRACT}/events?limit=200` +
+      const url =
+        `${HORIZON}/contracts/${CONTRACT}/events?limit=200` +
         (lastCursor ? `&cursor=${lastCursor}` : "");
       const res = await fetch(url, { headers: { Accept: "application/json" } });
-      if (!res.ok) { await wait(5000); continue; }
+      if (!res.ok) {
+        await wait(5000);
+        continue;
+      }
       const body: any = await res.json();
 
       for (const ev of body?._embedded?.records ?? []) {

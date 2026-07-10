@@ -17,14 +17,15 @@ export function useWallet() {
   }
 
   function disconnect() {
-    setAddress(null); setKind(null);
+    setAddress(null);
+    setKind(null);
   }
 
   return {
     address,
     kind,
     isStellar: kind === "freighter",
-    isEvm:     kind === "metamask",
+    isEvm: kind === "metamask",
     supported: true,
     connect,
     disconnect,

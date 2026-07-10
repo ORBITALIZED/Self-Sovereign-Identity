@@ -1,10 +1,12 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { SSIStellar } from "@ssi/sdk/stellar";
+// Note: Sub-path exports (@ssi/sdk/stellar, @ssi/sdk/zkp) require the SDK
+// to be built first. Import from barrel until SDK is compiled.
+import { SSIStellar } from "@ssi/sdk";
 
 const stellar = new SSIStellar({
-  horizonUrl:   process.env.STELLAR_HORIZON_URL!,
-  rpcUrl:       process.env.STELLAR_SOROBAN_RPC_URL!,
+  horizonUrl: process.env.STELLAR_HORIZON_URL!,
+  rpcUrl: process.env.STELLAR_SOROBAN_RPC_URL!,
   networkPassphrase: process.env.STELLAR_NETWORK_PASSPHRASE!,
   identityContractId: process.env.STELLAR_IDENTITY_CONTRACT ?? "",
   wrappedBadgeContractId: process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "",
@@ -15,13 +17,13 @@ const stellar = new SSIStellar({
 // and Soroban `invokeContract` is signed client-side via Freighter. This
 // body schema mirrors what the wallet sends after the user signs.
 const CreateBody = z.object({
-  pubkey:              z.string().min(56),
+  pubkey: z.string().min(56),
   biometricCommitment: z.string().regex(/^[0-9a-f]{64}$/),
-  metadataCid:         z.string().min(1),
-  recoveryOwners:      z.array(z.string().min(56)).min(1),
+  metadataCid: z.string().min(1),
+  recoveryOwners: z.array(z.string().min(56)).min(1),
   /** Base64 of the pre-signed Soroban invokeContract XDR — produced by the
    *  wallet, not by the API. The gateway submits it to the network as-is. */
-  signedInvokeXdr:     z.string().min(1),
+  signedInvokeXdr: z.string().min(1),
 });
 
 export async function identityRoutes(app: FastifyInstance) {

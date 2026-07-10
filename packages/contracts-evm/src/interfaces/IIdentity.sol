@@ -18,8 +18,8 @@ interface IIdentity {
         address indexed holder,
         bytes32 indexed schemaHash,
         uint256 tokenId,
-        uint32  destinationChainId,
-        bytes32  stellarPubKeyXdrHash
+        uint32 destinationChainId,
+        bytes32 stellarPubKeyXdrHash
     );
 
     error NotIssuer(address caller);

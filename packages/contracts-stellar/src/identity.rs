@@ -13,7 +13,7 @@
 //! both their `Address` (for authentication) and the raw `BytesN<32>`
 //! (as the storage key / identity pubkey field).
 
-use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, String, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, String, Vec};
 
 use crate::storage::{emit_event, DataKey, IDENTITY_TTL};
 
@@ -84,9 +84,11 @@ impl IdentityRegistry {
         env.storage()
             .persistent()
             .set(&DataKey::Identity(pubkey.clone()), &id);
-        env.storage()
-            .persistent()
-            .extend_ttl(&DataKey::Identity(pubkey.clone()), IDENTITY_TTL, IDENTITY_TTL);
+        env.storage().persistent().extend_ttl(
+            &DataKey::Identity(pubkey.clone()),
+            IDENTITY_TTL,
+            IDENTITY_TTL,
+        );
 
         emit_event(
             &env,
@@ -115,9 +117,7 @@ impl IdentityRegistry {
 
     /// Read an identity record.
     pub fn get_identity(env: Env, pubkey: BytesN<32>) -> Option<Identity> {
-        env.storage()
-            .persistent()
-            .get(&DataKey::Identity(pubkey))
+        env.storage().persistent().get(&DataKey::Identity(pubkey))
     }
 
     /// Rotate the biometric commitment (e.g. user re-enrolled their fingerprint).

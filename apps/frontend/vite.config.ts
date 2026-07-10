@@ -7,11 +7,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": { target: process.env.VITE_API_URL ?? "http://localhost:8080", changeOrigin: true },
-      "/bridge/ws": { ws: true, target: process.env.VITE_BRIDGE_RELAYER_WS ?? "ws://localhost:8081" },
+      "/bridge/ws": {
+        ws: true,
+        target: process.env.VITE_BRIDGE_RELAYER_WS ?? "ws://localhost:8081",
+      },
     },
   },
   build: { sourcemap: true },
-  test: { environment: "jsdom", globals: true },
+  test: { environment: "node", globals: true },
   resolve: {
     alias: { "@": "/src" },
   },

@@ -11,15 +11,15 @@
 //!
 //! Build to wasm with:  `cargo build --target wasm32-unknown-unknown --release`
 
-pub mod identity;
 pub mod credentials;
-pub mod wrapped_badge;
+pub mod identity;
 pub mod social_recovery;
 pub mod storage;
+pub mod wrapped_badge;
 
 // Public re-exports of every sub-contract's client.
-pub use identity::IdentityRegistryClient;
 pub use credentials::CredentialsIssuerClient;
+pub use identity::IdentityRegistryClient;
 pub use wrapped_badge::WrappedBadgeContractClient;
 
 #[cfg(test)]

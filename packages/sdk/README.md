@@ -38,18 +38,18 @@ packages/sdk/
 import { SSIStellar, SSIEvm, SSIZkp } from "@ssi/sdk";
 
 const stellar = new SSIStellar({
-  horizonUrl:    "https://horizon-testnet.stellar.org",
-  rpcUrl:        "https://soroban-testnet.stellar.org",
-  networkPass:   "Test SDF Network ; September 2015",
-  identityCid:   process.env.STELLAR_IDENTITY_CONTRACT!,
+  horizonUrl: "https://horizon-testnet.stellar.org",
+  rpcUrl: "https://soroban-testnet.stellar.org",
+  networkPass: "Test SDF Network ; September 2015",
+  identityCid: process.env.STELLAR_IDENTITY_CONTRACT!,
   wrappedBadgeCid: process.env.STELLAR_WRAPPED_BADGE_CONTRACT!,
 });
 const evm = new SSIEvm({
-  rpcUrl:   process.env.EVM_RPC_URL!,
-  chainId:  Number(process.env.EVM_CHAIN_ID),
+  rpcUrl: process.env.EVM_RPC_URL!,
+  chainId: Number(process.env.EVM_CHAIN_ID),
   registry: process.env.EVM_REGISTRY_CONTRACT!,
-  sbt:      process.env.EVM_BADGE_CONTRACT!,
-  bridge:   process.env.EVM_BRIDGE_CONTRACT!,
+  sbt: process.env.EVM_BADGE_CONTRACT!,
+  bridge: process.env.EVM_BRIDGE_CONTRACT!,
 });
 const zkp = new SSIZkp({ wasm: "…", zkey: "…" });
 

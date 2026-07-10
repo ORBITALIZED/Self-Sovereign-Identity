@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IdentitySBT} from "./IdentitySBT.sol";
-import {IIdentity} from "./interfaces/IIdentity.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IdentitySBT } from "./IdentitySBT.sol";
+import { IIdentity } from "./interfaces/IIdentity.sol";
 
 /// @title WrappedBadge — cross-chain lock & burn hook for the relayer.
 /// @notice When the relayer wants to wrap a badge onto Stellar, the holder
@@ -13,7 +13,7 @@ contract WrappedBadge is AccessControl, IIdentity {
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
     IdentitySBT public immutable badge;
-    uint32     public immutable selfChainId;
+    uint32 public immutable selfChainId;
 
     /// @notice Hash that prevents replay across chains.
     mapping(bytes32 => bool) public processedLocks;
@@ -22,7 +22,7 @@ contract WrappedBadge is AccessControl, IIdentity {
         address indexed holder,
         bytes32 indexed schemaHash,
         uint256 tokenId,
-        uint32  destinationChainId,
+        uint32 destinationChainId,
         bytes32 stellarPubKeyXdrHash
     );
 
@@ -47,14 +47,16 @@ contract WrappedBadge is AccessControl, IIdentity {
     ///         the bridge relayer which will mint a wrapped asset on Stellar.
     function lockAndNotify(
         uint256 tokenId,
-        uint32  destinationChainId,
+        uint32 destinationChainId,
         bytes32 stellarPubKeyXdrHash
     ) external {
         address holder = badge.ownerOf(tokenId);
         require(holder == msg.sender, "SSI: only holder can lock");
 
         bytes32 schemaHash = badge.credentials(tokenId).schemaHash;
-        bytes32 lockHash   = keccak256(abi.encode(holder, tokenId, destinationChainId, stellarPubKeyXdrHash));
+        bytes32 lockHash = keccak256(
+            abi.encode(holder, tokenId, destinationChainId, stellarPubKeyXdrHash)
+        );
         require(!processedLocks[lockHash], "SSI: replay");
         processedLocks[lockHash] = true;
 
