@@ -54,9 +54,7 @@ export class SSIStellar {
     const sendResult: any = await rpc.sendTransaction(signedXdrBase64);
 
     if (sendResult.status !== "PENDING") {
-      throw new Error(
-        `Transaction submission failed: ${JSON.stringify(sendResult)}`,
-      );
+      throw new Error(`Transaction submission failed: ${JSON.stringify(sendResult)}`);
     }
 
     await pollTransaction(rpc, sendResult.hash);

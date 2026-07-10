@@ -87,7 +87,9 @@ export async function bridgeRoutes(app: FastifyInstance) {
     app.log.warn("STELLAR_HORIZON_URL not set — /bridge/wrapped will return empty results");
   }
   if (!contractId) {
-    app.log.warn("STELLAR_WRAPPED_BADGE_CONTRACT not set — /bridge/wrapped will return empty results");
+    app.log.warn(
+      "STELLAR_WRAPPED_BADGE_CONTRACT not set — /bridge/wrapped will return empty results",
+    );
   }
 
   app.get<{
