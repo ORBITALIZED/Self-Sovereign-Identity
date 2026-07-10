@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+out/
+build/
+target/
+
+# Forge dependencies (OpenZeppelin etc.)
+packages/contracts-evm/lib/
+
+# Generated files
+pnpm-lock.yaml
+*.wasm
+*.ptau
+*.zkey
+
+# IDE
+.idea/
+.vscode/
