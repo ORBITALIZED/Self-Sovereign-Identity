@@ -31,8 +31,9 @@ contract WrappedBadgeTest is Test {
         bridge = new WrappedBadge(sbt, uint32(block.chainid), admin);
 
         // Grant the bridge the ISSUER_ROLE so it can call bridgeBurn.
-        vm.prank(admin);
-        sbt.grantRole(sbt.ISSUER_ROLE(), address(bridge));
+        vm.startPrank(admin);
+        sbt.grantRole(keccak256("ISSUER_ROLE"), address(bridge));
+        vm.stopPrank();
     }
 
     function test_lock_emits_event() public {
