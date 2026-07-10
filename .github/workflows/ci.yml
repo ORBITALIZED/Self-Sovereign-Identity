@@ -89,12 +89,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Install Forge dependencies
-        working-directory: packages/contracts-evm
-        run: |
-          forge install OpenZeppelin/openzeppelin-contracts@v5.5.0 --no-commit || true
-          forge install foundry-rs/forge-std@v1.9.7 --no-commit || true
-
+      # Dependencies are checked out via git submodules (actions/checkout submodules: recursive)
       - name: Forge Build
         working-directory: packages/contracts-evm
         run: forge build --sizes
