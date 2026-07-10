@@ -85,11 +85,16 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
     // -- Soulbound enforcement ----------------------------------------------
 
     /// @dev Overrides ERC721 `_update` to reject transfers between EOAs.
-    function _update(address to, uint256 tokenId, address auth) internal virtual override {
+    /// @return The previous owner address (delegated to super).
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal virtual override returns (address) {
         // allow mint (from == 0) AND burn (to == 0) — block all other transfers
         address from = _ownerOf(tokenId);
         if (from != address(0) && to != address(0)) revert TransferForbidden();
-        super._update(to, tokenId, auth);
+        return super._update(to, tokenId, auth);
     }
 
     /// @notice Optional allow-list endpoint (e.g. for the bridge to burn).
