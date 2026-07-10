@@ -92,7 +92,7 @@ jobs:
       - name: Install Forge dependencies
         working-directory: packages/contracts-evm
         run: |
-          forge install OpenZeppelin/openzeppelin-contracts@v5.6.1 --no-commit || true
+          forge install OpenZeppelin/openzeppelin-contracts@v5.5.0 --no-commit || true
           forge install foundry-rs/forge-std@v1.9.7 --no-commit || true
 
       - name: Forge Build
