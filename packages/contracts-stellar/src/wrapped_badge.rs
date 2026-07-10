@@ -37,7 +37,7 @@ pub struct WrappedBadgeContract;
 
 #[contractimpl]
 impl WrappedBadgeContract {
-    pub fn initialize(env: Env, admin: Address) {
+    pub fn init_wrapped(env: Env, admin: Address) {
         if env.storage().instance().has(&DataKey::Admin) {
             panic!("already initialized");
         }
