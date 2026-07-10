@@ -7,7 +7,7 @@
 
 import type { Hash32, StellarPubKey } from "../types/index.js";
 
-import { decodeStrkey } from "./_strkey.js";
+import { decodeStrkey, encodeStrkey } from "./_strkey.js";
 
 // Stellar "G…" addresses MUST contain a valid 32-byte ed25519 public key + CRC16.
 // In real code we should parse & verify the checksum; for the scaffold we lazy-
@@ -17,9 +17,8 @@ export function strKeyToPubKey(gAddress: string): StellarPubKey {
   return decodeStrkey(gAddress);
 }
 
-export function pubKeyToStrKey(_pk: StellarPubKey): string {
-  // Placeholder inverse of strKeyToPubKey — to be replaced.
-  return "G".padEnd(56, "A");
+export function pubKeyToStrKey(pk: StellarPubKey): string {
+  return encodeStrkey(pk);
 }
 
 export function bytesToHex(b: Uint8Array): Hash32 {
