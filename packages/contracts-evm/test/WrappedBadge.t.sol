@@ -29,6 +29,10 @@ contract WrappedBadgeTest is Test {
         vm.prank(admin);
         sbt.registerSchema(SCHEMA);
         bridge = new WrappedBadge(sbt, uint32(block.chainid), admin);
+
+        // Grant the bridge the ISSUER_ROLE so it can call bridgeBurn.
+        vm.prank(admin);
+        sbt.grantRole(sbt.ISSUER_ROLE(), address(bridge));
     }
 
     function test_lock_emits_event() public {
