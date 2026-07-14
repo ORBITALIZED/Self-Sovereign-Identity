@@ -3,3 +3,4 @@ out/
 broadcast/
 lib/
 .env
+foundry.lock

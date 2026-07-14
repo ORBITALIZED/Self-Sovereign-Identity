@@ -89,9 +89,7 @@ export async function bridgeRoutes(app: FastifyInstance) {
   // output isn't polluted by these on every `build()` registration.
   if (isOperationalLogEnabled()) {
     if (!horizonUrl) {
-      app.log.warn(
-        "STELLAR_HORIZON_URL not set — /bridge/wrapped will return empty results",
-      );
+      app.log.warn("STELLAR_HORIZON_URL not set — /bridge/wrapped will return empty results");
     }
     if (!contractId) {
       app.log.warn(

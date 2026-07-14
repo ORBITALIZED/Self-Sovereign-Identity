@@ -40,8 +40,7 @@ export async function errorHandler(err: FastifyError, req: FastifyRequest, reply
 
   const status = err.statusCode ?? 500;
   const code: ErrorCode =
-    STATUS_TO_CODE[status] ??
-    (status >= 500 ? "INTERNAL" : STATUS_TO_CODE[400] ?? "VALIDATION");
+    STATUS_TO_CODE[status] ?? (status >= 500 ? "INTERNAL" : (STATUS_TO_CODE[400] ?? "VALIDATION"));
 
   reply.code(status);
 

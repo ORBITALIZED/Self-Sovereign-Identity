@@ -14,6 +14,7 @@ contract IdentityRegistryTest is Test {
     address holder = makeAddr("holder");
 
     bytes32 SCHEMA = keccak256("passport");
+    bytes32 REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     event IssuerRegistered(address indexed wallet, string uri);
     event SchemaRegistered(bytes32 indexed hash, string uri);
@@ -22,7 +23,7 @@ contract IdentityRegistryTest is Test {
     function setUp() public {
         registry = new IdentityRegistry(admin);
         vm.prank(admin);
-        registry.grantRole(registry.REGISTRAR_ROLE(), registrar);
+        registry.grantRole(REGISTRAR_ROLE, registrar);
     }
 
     function test_register_issuer() public {
@@ -81,7 +82,7 @@ contract IdentityRegistryTest is Test {
         vm.prank(registrar);
         registry.attest(holder, SCHEMA);
 
-        bytes32[] memory saw = registry.holderSchemas(holder);
+        bytes32[] memory saw = registry.getHolderSchemas(holder);
         assertEq(saw.length, 1);
         assertEq(saw[0], SCHEMA);
     }

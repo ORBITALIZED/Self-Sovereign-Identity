@@ -25,7 +25,17 @@ contract IdentityRegistry is AccessControl, IIdentity {
 
     mapping(address => Issuer) public issuers;
     mapping(bytes32 => Schema) public schemas;
-    mapping(address => bytes32[]) public holderSchemas;
+    mapping(address => bytes32[]) holderSchemas;
+
+    //
+    // NOTE: Solidity auto-generates a getter for `public mapping(address => bytes32[])`
+    // that requires TWO arguments (address key + uint256 index).  To retrieve the
+    // entire array in one call, use the explicit `getHolderSchemas` view below.
+
+    /// @notice Return the full list of schema hashes attested for a holder.
+    function getHolderSchemas(address holder) external view returns (bytes32[] memory) {
+        return holderSchemas[holder];
+    }
 
     event IssuerRegistered(address indexed wallet, string uri);
     event SchemaRegistered(bytes32 indexed hash, string uri);

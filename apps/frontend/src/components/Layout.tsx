@@ -37,7 +37,9 @@ export default function Layout({ children }: { children: ReactNode }) {
         <WalletConnect />
       </header>
 
-      <main id="main-content" className="flex-1 px-6 py-8 max-w-7xl w-full mx-auto">{children}</main>
+      <main id="main-content" className="flex-1 px-6 py-8 max-w-7xl w-full mx-auto">
+        {children}
+      </main>
 
       <footer className="px-6 py-4 text-xs text-slate-500 border-t border-surface-700 flex justify-between">
         <span>Built for the Urban &amp; Climate Action Track · Stellar + EVM + ZK</span>

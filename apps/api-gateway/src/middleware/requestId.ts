@@ -34,7 +34,12 @@ export async function registerRequestId(app: FastifyInstance): Promise<void> {
       typeof incoming === "string" ? incoming : Array.isArray(incoming) ? incoming[0] : undefined;
 
     let id: string;
-    if (candidate && candidate.length > 0 && candidate.length <= MAX_LEN && ALLOWED.test(candidate)) {
+    if (
+      candidate &&
+      candidate.length > 0 &&
+      candidate.length <= MAX_LEN &&
+      ALLOWED.test(candidate)
+    ) {
       id = candidate;
     } else {
       id = randomUUID();

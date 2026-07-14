@@ -50,13 +50,13 @@ Out-of-scope (but please disclose anyway):
 
 ## Supported versions
 
-| Component  | Supported versions                  |
-| ---------- | ----------------------------------- |
-| CLI / SDK  | `@ssi/sdk` v0.1.x and current main   |
-| EVM        | contracts in `packages/contracts-evm` on main |
-| Soroban    | contracts in `packages/contracts-stellar` on main |
-| Services   | `apps/*` on main                     |
-| Frontend   | `apps/frontend` on main              |
+| Component | Supported versions                                |
+| --------- | ------------------------------------------------- |
+| CLI / SDK | `@ssi/sdk` v0.1.x and current main                |
+| EVM       | contracts in `packages/contracts-evm` on main     |
+| Soroban   | contracts in `packages/contracts-stellar` on main |
+| Services  | `apps/*` on main                                  |
+| Frontend  | `apps/frontend` on main                           |
 
 Older versions (anything tagged <= v0.0.x) are **not supported** and
 will not receive backported patches.

@@ -33,13 +33,7 @@ export interface ToastProps {
  * resets every time `visible` flips to `true`, so callers can reuse a
  * single Toast instance by passing a fresh `key`.
  */
-export function Toast({
-  message,
-  kind = "info",
-  visible,
-  onClose,
-  durationMs = 5000,
-}: ToastProps) {
+export function Toast({ message, kind = "info", visible, onClose, durationMs = 5000 }: ToastProps) {
   useEffect(() => {
     if (!visible || durationMs <= 0) return;
     const t = setTimeout(onClose, durationMs);

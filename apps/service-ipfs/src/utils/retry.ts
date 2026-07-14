@@ -14,10 +14,7 @@ export interface RetryOptions {
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  opts: RetryOptions = {},
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
   const maxAttempts = opts.maxAttempts ?? 3;
   const initialDelayMs = opts.initialDelayMs ?? 200;
   const maxDelayMs = opts.maxDelayMs ?? 2_000;

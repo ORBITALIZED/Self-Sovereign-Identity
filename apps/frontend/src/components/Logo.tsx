@@ -29,13 +29,20 @@ export default function Logo({
   );
   if (!asLink) {
     return (
-      <div className={clsx("flex items-center gap-2 text-xl font-semibold", className)} aria-label={text}>
+      <div
+        className={clsx("flex items-center gap-2 text-xl font-semibold", className)}
+        aria-label={text}
+      >
         {inner}
       </div>
     );
   }
   return (
-    <Link to="/" className={clsx("flex items-center gap-2 text-xl font-semibold", className)} aria-label={text}>
+    <Link
+      to="/"
+      className={clsx("flex items-center gap-2 text-xl font-semibold", className)}
+      aria-label={text}
+    >
       {inner}
     </Link>
   );

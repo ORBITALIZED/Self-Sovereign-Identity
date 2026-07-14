@@ -32,7 +32,10 @@ export function Spinner({ size = "md", className, label = "Loading…" }: Spinne
       aria-label={label}
       className={clsx("inline-flex items-center", className)}
     >
-      <Loader2 className={clsx("animate-spin text-brand-500", sizeClasses[size])} aria-hidden="true" />
+      <Loader2
+        className={clsx("animate-spin text-brand-500", sizeClasses[size])}
+        aria-hidden="true"
+      />
       <span className="sr-only">{label}</span>
     </span>
   );
