@@ -1,0 +1,42 @@
+# CODEOWNERS
+# =============================================================================
+# This file follows GitHub's CODEOWNERS spec:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Each team below is a placeholder. Replace the @org/team handles with
+# real GitHub teams once the platform gains maintainer structure.
+# =============================================================================
+
+# Default — every PR needs at least one platform-team approval.
+/                                       @ssi/platform-team
+
+# Templates and monorepo root
+/Makefile                              @ssi/platform-team
+/turbo.json                            @ssi/platform-team
+/pnpm-workspace.yaml                   @ssi/platform-team
+/package.json                          @ssi/platform-team
+/docs/                                 @ssi/platform-team
+/SECURITY.md                           @ssi/platform-team
+
+/packages/sdk/                         @ssi/sdk-maintainers
+/packages/sdk/CHANGELOG.md             @ssi/sdk-maintainers
+
+/packages/contracts-evm/               @ssi/evm-contracts-maintainers
+/packages/contracts-evm/test/          @ssi/evm-contracts-maintainers
+/packages/contracts-evm/script/        @ssi/evm-contracts-maintainers
+
+/packages/contracts-stellar/           @ssi/stellar-contracts-maintainers
+/packages/contracts-stellar/src/test.rs @ssi/stellar-contracts-maintainers
+
+/packages/zk-circuits/                 @ssi/crypto-maintainers
+/packages/zk-circuits/circuits/        @ssi/crypto-maintainers
+
+/apps/frontend/                       @ssi/frontend-maintainers
+/apps/api-gateway/                     @ssi/backend-maintainers
+/apps/service-bridge-relayer/          @ssi/bridge-maintainers  @ssi/backend-maintainers
+/apps/service-ipfs/                    @ssi/backend-maintainers
+/apps/service-ai-fraud/                @ssi/backend-maintainers  @ssi/ml-maintainers
+
+# Secret-touching files get an extra reviewer.
+**/.env*                              @ssi/platform-team  @ssi/security-team
+SECURITY.md                           @ssi/platform-team  @ssi/security-team
