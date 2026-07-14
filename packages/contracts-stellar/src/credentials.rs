@@ -31,6 +31,14 @@ impl CredentialsIssuer {
     /// Allow an address to act as credential issuer (caller = admin).
     /// Issuers are tracked in a separate storage key (IssuerAllowlist),
     /// NOT by overwriting DataKey::Admin.
+    ///
+    /// # Arguments
+    /// * `caller` — the contract admin `Address`; must authorise.
+    /// * `issuer` — the issuer `Address` to add to the allow-list.
+    ///
+    /// # Panics
+    /// * If `caller` is not the deployed admin.
+    /// * If the contract has not been initialised (no admin set).
     pub fn authorize_issuer(env: Env, caller: Address, issuer: Address) {
         let admin = crate::storage::require_admin(&env);
         caller.require_auth();
@@ -43,6 +51,9 @@ impl CredentialsIssuer {
     }
 
     /// Check if an address is an allowed issuer.
+    ///
+    /// # Returns
+    /// `true` iff `issuer` has been added to the allow-list by [`Self::authorize_issuer`].
     pub fn is_authorized_issuer(env: Env, issuer: Address) -> bool {
         env.storage()
             .instance()
@@ -51,6 +62,16 @@ impl CredentialsIssuer {
     }
 
     /// Issue a credential (caller must be an authorized issuer).
+    ///
+    /// # Arguments
+    /// * `issuer`       — issuer `Address`; authenticates and must be in the allow-list.
+    /// * `subject`      — the holder's 32-byte pubkey.
+    /// * `schema_hash`  — stable hash of the credential schema.
+    /// * `cid`          — IPFS CID of the encrypted credential document.
+    /// * `valid_until`  — unix seconds after which the credential is considered stale.
+    ///
+    /// # Events
+    /// Emits `credential_issued(issuer, subject, schema_hash)`.
     pub fn issue_credential(
         env: Env,
         issuer: Address,
@@ -96,6 +117,10 @@ impl CredentialsIssuer {
     }
 
     /// Revoke a previously issued credential (caller must be the issuer).
+    ///
+    /// # Panics
+    /// * If no credential exists for `(subject, schema_hash)`.
+    /// * If the caller is not the original issuer of the credential.
     pub fn revoke_credential(
         env: Env,
         issuer: Address,
@@ -126,6 +151,9 @@ impl CredentialsIssuer {
     }
 
     /// Read a single credential.
+    ///
+    /// # Returns
+    /// `Some(Credential)` if one exists, `None` otherwise.
     pub fn get_credential(
         env: Env,
         subject: BytesN<32>,
@@ -137,10 +165,33 @@ impl CredentialsIssuer {
     }
 
     /// Return the list of schema hashes a user holds.
+    ///
+    /// Used by the SDK's `Credentials.list` to then fetch each full record
+    /// via [`Self::get_credential`].
     pub fn list_credentials(env: Env, subject: BytesN<32>) -> Vec<BytesN<32>> {
         env.storage()
             .persistent()
             .get(&DataKey::CredIndex(subject))
             .unwrap_or(Vec::new(&env))
+    }
+
+    /// Return the number of credentials a subject holds.
+    ///
+    /// # Arguments
+    /// * `subject` — the holder's 32-byte pubkey.
+    ///
+    /// # Returns
+    /// A `u32` count (0 if no credentials are indexed). Read-only.
+    ///
+    /// # Note
+    /// The Soroban host charges per storage access; the count is derived
+    /// from the `CredIndex` Vec rather than a separate counter so the
+    /// canonical order of the index doesn't fight the count after rollbacks.
+    pub fn get_credentials_count(env: Env, subject: BytesN<32>) -> u32 {
+        env.storage()
+            .persistent()
+            .get::<DataKey, Vec<BytesN<32>>>(&DataKey::CredIndex(subject))
+            .unwrap_or(Vec::new(&env))
+            .len() as u32
     }
 }
