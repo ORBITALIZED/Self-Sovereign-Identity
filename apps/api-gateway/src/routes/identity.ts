@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { SSIStellar } from "@ssi/sdk";
+import { isOperationalLogEnabled } from "../middleware/envGate.js";
 
 /** Stable error code returned by both identity routes when the Stellar
  *  client is not configured. Matches the UPPER_SNAKE convention used in
@@ -62,14 +63,11 @@ export async function identityRoutes(app: FastifyInstance) {
   // Eager degraded-mode warn: runs once at route-registration (i.e. boot).
   // Operators see this regardless of /identity traffic, and the line flows
   // through Fastify's structured Pino logger so it joins the JSON log stream
-  // used elsewhere in the system.
-  // Suppressed under vitest runs (VITEST env) AND under ad-hoc smoke
-  // scripts that set NODE_ENV=test without going through vitest, so test
-  // output isn't polluted by one warn line per `build()` invocation.
+  // used elsewhere in the system. The deploy-time visibility gate is
+  // centralised in `middleware/envGate.ts`.
   if (
     process.env.STELLAR_HORIZON_URL === undefined &&
-    !process.env.VITEST &&
-    process.env.NODE_ENV !== "test"
+    isOperationalLogEnabled()
   ) {
     app.log.warn(
       "STELLAR_HORIZON_URL not configured — /identity routes will return 503 STELLAR_NOT_CONFIGURED; see apps/api-gateway/.env.example",

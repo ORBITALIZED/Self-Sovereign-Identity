@@ -7,6 +7,7 @@
 
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { isOperationalLogEnabled } from "../middleware/envGate.js";
 
 const QUERY = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(30),
@@ -83,13 +84,20 @@ export async function bridgeRoutes(app: FastifyInstance) {
   const horizonUrl = process.env.STELLAR_HORIZON_URL ?? "";
   const contractId = process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "";
 
-  if (!horizonUrl) {
-    app.log.warn("STELLAR_HORIZON_URL not set — /bridge/wrapped will return empty results");
-  }
-  if (!contractId) {
-    app.log.warn(
-      "STELLAR_WRAPPED_BADGE_CONTRACT not set — /bridge/wrapped will return empty results",
-    );
+  // Operator-visibility warnings only fire under normal runtime — not
+  // during vitest runs or ad-hoc `NODE_ENV=test` smoke scripts — so test
+  // output isn't polluted by these on every `build()` registration.
+  if (isOperationalLogEnabled()) {
+    if (!horizonUrl) {
+      app.log.warn(
+        "STELLAR_HORIZON_URL not set — /bridge/wrapped will return empty results",
+      );
+    }
+    if (!contractId) {
+      app.log.warn(
+        "STELLAR_WRAPPED_BADGE_CONTRACT not set — /bridge/wrapped will return empty results",
+      );
+    }
   }
 
   app.get<{
