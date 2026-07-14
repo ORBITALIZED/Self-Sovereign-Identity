@@ -9,7 +9,7 @@
 
 #![cfg(test)]
 
-use soroban_sdk::{Address, BytesN, Env, String, Vec};
+use soroban_sdk::{vec, Address, BytesN, Env, String, Vec};
 
 use crate::credentials::{CredentialsIssuer, CredentialsIssuerClient};
 use crate::identity::{Identity, IdentityRegistry, IdentityRegistryClient};
@@ -44,6 +44,48 @@ fn create_and_get_identity() {
     assert_eq!(id.biometric_commitment, commit);
 }
 
+/// Initialize must reject a second call — admin is set exactly once.
+#[test]
+#[should_panic(expected = "already initialized")]
+fn initialize_panics_on_second_call() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::from_string(&String::from_str(
+        &env,
+        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ));
+    let contract_id = env.register_contract(None, IdentityRegistry);
+    let client = IdentityRegistryClient::new(&env, &contract_id);
+    client.initialize(&admin);
+    // Second call must panic — Soroban panics propagate out of the host
+    // function with the host-captured message.
+    client.initialize(&admin);
+}
+
+/// Empty guardian list is rejected by `create_identity` so users cannot
+/// silently lose all recovery paths.
+#[test]
+#[should_panic(expected = "at least one recovery owner required")]
+fn create_identity_panics_on_no_guardians() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::from_string(&String::from_str(
+        &env,
+        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ));
+    let contract_id = env.register_contract(None, IdentityRegistry);
+    let client = IdentityRegistryClient::new(&env, &contract_id);
+    client.initialize(&admin);
+
+    let caller = admin.clone();
+    let pk = BytesN::from_array(&env, &[1u8; 32]);
+    let commit = BytesN::from_array(&env, &[2u8; 32]);
+    let cid = String::from_str(&env, "QmScaffoldPlaceholderCid0000000000000000000000");
+    let empty_guards: Vec<BytesN<32>> = vec![&env];
+
+    client.create_identity(&caller, &pk, &commit, &cid, &empty_guards);
+}
+
 /// Revocation should flip `revoked` to true without touching the index.
 #[test]
 fn revoke_credential_flow() {
@@ -63,22 +105,57 @@ fn revoke_credential_flow() {
     let cid = String::from_str(&env, "QmCredentialContent00000000000000000000000000");
 
     // Issue
-    assert!(creds.issue_credential(
+    let issued = creds.try_issue_credential(
         &issuer_address,
         &subject,
         &schema_hash,
         &cid,
         &9_999_999_999u64,
-    ));
+    );
+    assert!(issued.is_ok());
 
     // Sanity: revoked starts false.
     let stored = creds.get_credential(&subject, &schema_hash).unwrap();
     assert!(!stored.revoked);
 
     // Revoke (the issuer is the same caller).
-    assert!(creds.revoke_credential(&issuer_address, &subject, &schema_hash));
+    let revoked = creds.try_revoke_credential(&issuer_address, &subject, &schema_hash);
+    assert!(revoked.is_ok());
 
-    // After revoke: revoked == true, all other fields unchanged.
+    // After revoke: revoked == true.
     let stored = creds.get_credential(&subject, &schema_hash).unwrap();
     assert!(stored.revoked);
+}
+
+/// Non-issuer cannot revoke a credential they didn't issue.
+#[test]
+#[should_panic(expected = "only the original issuer may revoke")]
+fn revoke_credential_rejects_non_issuer() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let issuer_address = Address::from_string(&String::from_str(
+        &env,
+        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ));
+    let contract_id = env.register_contract(None, CredentialsIssuer);
+    let creds = CredentialsIssuerClient::new(&env, &contract_id);
+
+    let subject = BytesN::from_array(&env, &[7u8; 32]);
+    let schema_hash = BytesN::from_array(&env, &[8u8; 32]);
+    let cid = String::from_str(&env, "QmCredentialContent00000000000000000000000000");
+
+    let _ = creds.issue_credential(
+        &issuer_address,
+        &subject,
+        &schema_hash,
+        &cid,
+        &9_999_999_999u64,
+    );
+
+    // A different "wallet" address tries to revoke.
+    let stranger = Address::from_string(&String::from_str(
+        &env,
+        "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    ));
+    creds.revoke_credential(&stranger, &subject, &schema_hash);
 }
