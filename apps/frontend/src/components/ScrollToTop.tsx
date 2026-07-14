@@ -11,7 +11,10 @@ import { useLocation } from "react-router-dom";
 export default function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    // Use the 2-arg form (no ScrollBehavior cast) so we don't rely on
+    // the non-typed `"instant"` value. The browser's default is "auto"
+    // which is exactly what we want for a route change (no animation).
+    window.scrollTo(0, 0);
   }, [pathname]);
   return null;
 }
