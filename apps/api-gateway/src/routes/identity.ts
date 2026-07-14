@@ -37,26 +37,11 @@ function buildStellar(): SSIStellar | null {
   });
 }
 
-/** Fired exactly once per process when the gateway boots without the
- *  Stellar env vars. Operators see one startup event per deploy rather
- *  than N warn lines per second from per-request logging. */
-function logDegradedStartupOnce(): void {
-  console.warn(
-    "[identity] STELLAR_HORIZON_URL/STELLAR_SOROBAN_RPC_URL/STELLAR_NETWORK_PASSPHRASE not configured; " +
-      "/identity routes will return 503 STELLAR_NOT_CONFIGURED. " +
-      "See apps/api-gateway/.env.example.",
-  );
-}
-
 // Cache the SDK instance per-process so we only pay the (deferred)
-// `await import("@stellar/stellar-sdk")` cost once across all requests,
-// and so the degraded-mode startup warn fires exactly once per process.
+// `await import("@stellar/stellar-sdk")` cost once across all requests.
 let _stellar: SSIStellar | null | undefined;
 function getStellar(): SSIStellar | null {
-  if (_stellar === undefined) {
-    _stellar = buildStellar();
-    if (_stellar === null) logDegradedStartupOnce();
-  }
+  if (_stellar === undefined) _stellar = buildStellar();
   return _stellar;
 }
 
@@ -74,6 +59,16 @@ const CreateBody = z.object({
 });
 
 export async function identityRoutes(app: FastifyInstance) {
+  // Eager degraded-mode warn: runs once at route-registration (i.e. boot).
+  // Operators see this regardless of /identity traffic, and the line flows
+  // through Fastify's structured Pino logger so it joins the JSON log stream
+  // used elsewhere in the system.
+  if (process.env.STELLAR_HORIZON_URL === undefined) {
+    app.log.warn(
+      "STELLAR_HORIZON_URL not configured — /identity routes will return 503 STELLAR_NOT_CONFIGURED; see apps/api-gateway/.env.example",
+    );
+  }
+
   // The route is JWT-protected; downstream services verify the signature.
   app.post("/", { preHandler: [app.authenticate] }, async (req, reply) => {
     const body = CreateBody.parse(req.body);
