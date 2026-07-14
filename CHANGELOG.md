@@ -72,7 +72,6 @@ SDK (`@ssi/sdk`) sub-packages.
 - `utils/retry.ts` retry helper for transient Helia failures.
 - Strict base64 validation in `/pin` (rejects invalid alphabet, silently-
   truncated input, oversized payloads).
-- Reconciliation of `/pin` response shape with the OpenAPI spec.
 
 ### Added (apps/service-bridge-relayer)
 - `src/health.ts` — a `node:http` server exposing `GET /health` with

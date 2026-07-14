@@ -17,7 +17,6 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP", "PL", "RUF"]
 
 [tool.mypy]
-strict = true
-
-[tool.pytest.ini_options]
+strict = true[tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]   # lets tests import `api` and `models.fraud_detector` directly  

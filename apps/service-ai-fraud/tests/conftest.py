@@ -8,25 +8,20 @@ The fraud service can run in two modes:
   real model has been trained and saved to `MODEL_PATH`.
 
 The fixtures below let tests opt into either behaviour explicitly.
+
+Note: tests rely on `pyproject.toml`'s `pythonpath = ["src"]` so we can
+import `api` and `models.fraud_detector` directly without sys.path hacks.
 """
 
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
-from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
-# Make the package's `src.` import path work without editable installs.
-ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "src"
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(SRC))
-
-from api import app  # noqa: E402  (import after sys.path tweak)
+from api import app  # noqa: E402  (resolvable via pyproject `pythonpath`)
 from models.fraud_detector import FraudDetector, HeuristicDetector  # noqa: E402
 
 
@@ -41,13 +36,13 @@ def client() -> TestClient:
 
 
 @pytest.fixture
-def heuristic() -> Any:
+def heuristic() -> HeuristicDetector:
     """A bare `HeuristicDetector` for pure-function tests (no HTTP)."""
     return HeuristicDetector()
 
 
 @pytest.fixture
-def maybe_model() -> Any:
+def maybe_model() -> FraudDetector:
     """Resolve whichever detector the running service has loaded.
 
     Tests that need the model can parametrise against this fixture to

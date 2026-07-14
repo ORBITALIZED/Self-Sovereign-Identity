@@ -31,7 +31,8 @@ export interface StructuredErrorBody {
 }
 
 export async function errorHandler(err: FastifyError, req: FastifyRequest, reply: FastifyReply) {
-  req.log.error({ err, requestId: (req as any).requestId }, "request failed");
+  // `requestId` is augmented onto FastifyRequest by `middleware/requestId.ts`.
+  req.log.error({ err, requestId: req.requestId }, "request failed");
 
   const status = err.statusCode ?? 500;
   const code: ErrorCode =
@@ -43,7 +44,7 @@ export async function errorHandler(err: FastifyError, req: FastifyRequest, reply
   const body: StructuredErrorBody = {
     error: code,
     message: err.message ?? "request failed",
-    requestId: (req as any).requestId,
+    requestId: req.requestId,
     retryable: status >= 500,
   };
 
