@@ -100,6 +100,12 @@ async function pollTransaction(rpc: any, hash: string, timeoutMs = 30_000): Prom
 // ---------------------------------------------------------------------------
 // IdentityRegistry sub-client
 // ---------------------------------------------------------------------------
+
+/**
+ * Sub-client surface for the on-chain `IdentityRegistry` contract.
+ * Methods read identity records via read-only simulation or write by
+ * building, signing, and submitting a Soroban invocation.
+ */
 class IdentitySubClient {
   constructor(private parent: SSIStellar) {}
 
@@ -235,6 +241,12 @@ class IdentitySubClient {
 // ---------------------------------------------------------------------------
 // WrappedBadge sub-client
 // ---------------------------------------------------------------------------
+
+/**
+ * Sub-client surface for the on-chain `WrappedBadge` contract.
+ * Bridges EVM-issued SBTs into Stellar-native wrapped assets and lets
+ * holders verify or unwrap them later.
+ */
 class WrappedBadgeSubClient {
   constructor(private parent: SSIStellar) {}
 
@@ -387,6 +399,12 @@ class WrappedBadgeSubClient {
 // ---------------------------------------------------------------------------
 // Credentials sub-client
 // ---------------------------------------------------------------------------
+
+/**
+ * Sub-client surface for the on-chain `CredentialsIssuer` contract.
+ * Exposes helpers to list a subject's credentials and to fetch each
+ * full record after the schema-hash index has been resolved.
+ */
 class CredentialsSubClient {
   constructor(private parent: SSIStellar) {}
 
