@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "TypeScript SDK for the Self-Sovereign Identity platform — wraps Stellar (Soroban + Horizon), EVM (viem) and ZK (snarkjs) into one ergonomic API.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
@@ -14,27 +14,27 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     },
     "./stellar": {
       "types": "./dist/stellar/index.d.ts",
       "import": "./dist/stellar/index.mjs",
-      "require": "./dist/stellar/index.js"
+      "require": "./dist/stellar/index.cjs"
     },
     "./evm": {
       "types": "./dist/evm/index.d.ts",
       "import": "./dist/evm/index.mjs",
-      "require": "./dist/evm/index.js"
+      "require": "./dist/evm/index.cjs"
     },
     "./zkp": {
       "types": "./dist/zkp/index.d.ts",
       "import": "./dist/zkp/index.mjs",
-      "require": "./dist/zkp/index.js"
+      "require": "./dist/zkp/index.cjs"
     },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.mjs",
-      "require": "./dist/utils/index.js"
+      "require": "./dist/utils/index.cjs"
     }
   },
   "scripts": {

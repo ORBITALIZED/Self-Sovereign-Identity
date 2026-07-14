@@ -9,8 +9,10 @@ The fraud service can run in two modes:
 
 The fixtures below let tests opt into either behaviour explicitly.
 
-Note: tests rely on `pyproject.toml`'s `pythonpath = ["src"]` so we can
-import `api` and `models.fraud_detector` directly without sys.path hacks.
+Note: tests rely on `pyproject.toml`'s `pythonpath = ["."]` combined with
+`src/__init__.py`, which makes `src` a normal package. Imports go through
+the package path (`from src.api import app`) so the relative imports
+inside `src/api.py` resolve as `src.<module>`.
 """
 
 from __future__ import annotations
@@ -21,8 +23,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from api import app  # noqa: E402  (resolvable via pyproject `pythonpath`)
-from models.fraud_detector import FraudDetector, HeuristicDetector  # noqa: E402
+# Resolvable via pyproject `pythonpath = ["."]`; see header note.
+from src.api import app  # noqa: E402
+from src.models.fraud_detector import FraudDetector, HeuristicDetector  # noqa: E402
 
 
 @pytest.fixture

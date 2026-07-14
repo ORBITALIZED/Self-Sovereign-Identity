@@ -21,6 +21,8 @@ strict = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# pythonpath = ["src"] lets tests import `api` and `models.fraud_detector` directly,
-# matching the package layout under `src/`.
-pythonpath = ["src"]
+# `pythonpath = ["."]` makes `src/` a normal Python package so the
+# RELATIVE imports inside `src/api.py` (`from .models.fraud_detector …`)
+# resolve as `src.<module>` rather than top-level `<module>`. Tests then
+# import via the explicit package path: `from src.api import app`.
+pythonpath = ["."]
