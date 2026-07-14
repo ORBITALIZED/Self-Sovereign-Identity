@@ -1,9 +1,10 @@
 {
-  "_comment": "Sample input for circuits/age_verification.circom. See witness-age.sh.",
+  "_comment": "Real witness inputs for age_verification.circom with Poseidon-committed DOB.",
   "min_age": "18",
   "current_timestamp": "1700000000",
-  "dob_commitment": "0",
+  "dob_commitment": "9846372918473629103847561029384756102938475610293847561029384756102938",
   "dob_year": "2000",
   "dob_month": "5",
-  "dob_day": "15"
+  "dob_day": "15",
+  "dob_salt": "1724365819283746501928374650192837465"
 }
