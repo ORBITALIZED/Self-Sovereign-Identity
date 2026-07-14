@@ -59,3 +59,6 @@ export function onIdentityCreated(cb: (ev: any) => void) {
 export function onBadgeWrapped(cb: (ev: any) => void) {
   stellarBus.on("badge_wrapped", cb);
 }
+export function onRecoveryComplete(cb: (ev: any) => void) {
+  stellarBus.on("recovery_complete", cb);
+}
