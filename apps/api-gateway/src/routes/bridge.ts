@@ -7,7 +7,7 @@
 
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { isOperationalLogEnabled } from "../middleware/envGate.js";
+import { isOperationalLogEnabled } from "../lib/envGate.js";
 
 const QUERY = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(30),
