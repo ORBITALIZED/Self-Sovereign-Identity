@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { SSIStellar } from "@ssi/sdk";
 import { isOperationalLogEnabled } from "../lib/envGate.js";
+import { getStellar } from "../lib/stellarClient.js";
 
 /** Stable error code returned by both identity routes when the Stellar
  *  client is not configured. Matches the UPPER_SNAKE convention used in
@@ -14,37 +14,6 @@ const STELLAR_NOT_CONFIGURED_BODY = {
     "Set STELLAR_HORIZON_URL, STELLAR_SOROBAN_RPC_URL and STELLAR_NETWORK_PASSPHRASE to enable identity routes.",
   retryable: true,
 } as const;
-
-/**
- * Construct the Stellar client lazily, on first use, so the gateway can
- * boot (and serve other routes like /health, /ready, /bridge/wrapped)
- * even when `STELLAR_HORIZON_URL` is not configured.
- *
- * If env vars are missing at request time, we return `null` and the route
- * handler responds with a 503 + `stellar_not_configured` instead of
- * letting the SDK throw a `ChainConnectionError`.
- */
-function buildStellar(): SSIStellar | null {
-  const horizonUrl = process.env.STELLAR_HORIZON_URL;
-  if (!horizonUrl) return null;
-
-  return new SSIStellar({
-    horizonUrl,
-    rpcUrl: process.env.STELLAR_SOROBAN_RPC_URL ?? "",
-    networkPassphrase: process.env.STELLAR_NETWORK_PASSPHRASE ?? "",
-    identityContractId: process.env.STELLAR_IDENTITY_CONTRACT ?? "",
-    wrappedBadgeContractId: process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "",
-    sorobanRpcUrl: process.env.STELLAR_SOROBAN_RPC_URL,
-  });
-}
-
-// Cache the SDK instance per-process so we only pay the (deferred)
-// `await import("@stellar/stellar-sdk")` cost once across all requests.
-let _stellar: SSIStellar | null | undefined;
-function getStellar(): SSIStellar | null {
-  if (_stellar === undefined) _stellar = buildStellar();
-  return _stellar;
-}
 
 // NOTE: the API never accepts a secret key — authentication happens with JWT
 // and Soroban `invokeContract` is signed client-side via Freighter. This

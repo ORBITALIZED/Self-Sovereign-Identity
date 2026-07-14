@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { SSIStellar, strKeyToPubKey } from "@ssi/sdk";
+import { strKeyToPubKey } from "@ssi/sdk";
+import { getStellar } from "../lib/stellarClient.js";
 
 const IssueBody = z.object({
   issuer: z.string().min(56),
@@ -8,26 +9,8 @@ const IssueBody = z.object({
   schemaHash: z.string().regex(/^0x[0-9a-f]{64}$/),
   cid: z.string().min(1),
   validUntil: z.number().int().positive(),
+  signedInvokeXdr: z.string().min(1).optional(),
 });
-
-function buildStellar(): SSIStellar | null {
-  const horizonUrl = process.env.STELLAR_HORIZON_URL;
-  if (!horizonUrl) return null;
-  return new SSIStellar({
-    horizonUrl,
-    rpcUrl: process.env.STELLAR_SOROBAN_RPC_URL ?? "",
-    networkPassphrase: process.env.STELLAR_NETWORK_PASSPHRASE ?? "",
-    identityContractId: process.env.STELLAR_IDENTITY_CONTRACT ?? "",
-    wrappedBadgeContractId: process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "",
-    sorobanRpcUrl: process.env.STELLAR_SOROBAN_RPC_URL,
-  });
-}
-
-let _stellar: SSIStellar | null | undefined;
-function getStellar(): SSIStellar | null {
-  if (_stellar === undefined) _stellar = buildStellar();
-  return _stellar;
-}
 
 export async function credentialsRoutes(app: FastifyInstance) {
   app.post("/", { preHandler: [app.authenticate] }, async (req, reply) => {
@@ -38,12 +21,15 @@ export async function credentialsRoutes(app: FastifyInstance) {
       return { error: "STELLAR_NOT_CONFIGURED" };
     }
     try {
-      const { subject } = body;
-      const subjectKey = strKeyToPubKey(subject);
-      const credentials = await stellar.credentials.list(subjectKey);
-      return { accepted: true, count: credentials.length };
+      if (body.signedInvokeXdr) {
+        const txHash = await stellar.submitTransaction(body.signedInvokeXdr);
+        return { accepted: true, txHash };
+      }
+      // Fallback when no pre-signed XDR: echo the issuance payload for
+      // the wallet/frontend to sign and resubmit.
+      return { accepted: true, body };
     } catch (e) {
-      reply.code(502);
+      reply.code(500);
       return { error: (e as Error).message };
     }
   });
