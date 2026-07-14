@@ -2,6 +2,18 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { SSIStellar } from "@ssi/sdk";
 
+/** Stable error code returned by both identity routes when the Stellar
+ *  client is not configured. Matches the UPPER_SNAKE convention used in
+ *  `errorHandler.ts` `STATUS_TO_CODE`. */
+const STELLAR_NOT_CONFIGURED = "STELLAR_NOT_CONFIGURED" as const;
+
+const STELLAR_NOT_CONFIGURED_BODY = {
+  error: STELLAR_NOT_CONFIGURED,
+  message:
+    "Set STELLAR_HORIZON_URL, STELLAR_SOROBAN_RPC_URL and STELLAR_NETWORK_PASSPHRASE to enable identity routes.",
+  retryable: true,
+} as const;
+
 /**
  * Construct the Stellar client lazily, on first use, so the gateway can
  * boot (and serve other routes like /health, /ready, /bridge/wrapped)
@@ -53,12 +65,7 @@ export async function identityRoutes(app: FastifyInstance) {
     const stellar = getStellar();
     if (!stellar) {
       reply.code(503);
-      return {
-        error: "stellar_not_configured",
-        message:
-          "Set STELLAR_HORIZON_URL, STELLAR_SOROBAN_RPC_URL and STELLAR_NETWORK_PASSPHRASE to enable identity routes.",
-        retryable: true,
-      };
+      return STELLAR_NOT_CONFIGURED_BODY;
     }
     try {
       const txHash = await stellar.submitTransaction(body.signedInvokeXdr);
@@ -73,12 +80,7 @@ export async function identityRoutes(app: FastifyInstance) {
     const stellar = getStellar();
     if (!stellar) {
       reply.code(503);
-      return {
-        error: "stellar_not_configured",
-        message:
-          "Set STELLAR_HORIZON_URL, STELLAR_SOROBAN_RPC_URL and STELLAR_NETWORK_PASSPHRASE to enable identity routes.",
-        retryable: true,
-      };
+      return STELLAR_NOT_CONFIGURED_BODY;
     }
     const id = await stellar.identity.get(new Uint8Array(32));
     if (!id) {
