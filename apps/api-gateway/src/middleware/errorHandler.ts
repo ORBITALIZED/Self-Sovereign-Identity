@@ -31,8 +31,12 @@ export interface StructuredErrorBody {
 }
 
 export async function errorHandler(err: FastifyError, req: FastifyRequest, reply: FastifyReply) {
-  // `requestId` is augmented onto FastifyRequest by `middleware/requestId.ts`.
-  req.log.error({ err, requestId: req.requestId }, "request failed");
+  // `requestId` is augmented onto FastifyRequest by `middleware/requestId.ts`
+  // as an OPTIONAL property — errors raised BEFORE the `onRequest` hook
+  // (body-parser failures, router mismatches) reach this handler without a
+  // populated id, so we always coerce to a defined string before logging.
+  const requestId = req.requestId ?? "(no-request-id)";
+  req.log.error({ err, requestId }, "request failed");
 
   const status = err.statusCode ?? 500;
   const code: ErrorCode =
