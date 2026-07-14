@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import IdentityCard from "../components/IdentityCard.js";
 import { Button } from "../components/ui/Button.js";
 import { Card } from "../components/ui/Card.js";
+import { Skeleton } from "../components/ui/Skeleton.js";
 import { api } from "../lib/api.js";
 import { ShieldAlert } from "lucide-react";
 
@@ -15,9 +16,9 @@ export default function Dashboard() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
         {isLoading && (
-          <Card className="p-6 animate-pulse">
-            <div className="h-6 w-40 bg-surface-700 rounded mb-4" />
-            <div className="h-4 w-72 bg-surface-700 rounded" />
+          <Card className="p-6 space-y-3">
+            <Skeleton width="w-40" height="h-6" />
+            <Skeleton width="w-72" height="h-4" />
           </Card>
         )}
 
