@@ -15,11 +15,27 @@ import { zkpRoutes } from "./routes/zkp.js";
 import { bridgeRoutes } from "./routes/bridge.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { registerAuth } from "./middleware/auth.js";
+import { registerRequestId } from "./middleware/requestId.js";
 
 export async function build(opts: { jwtSecret: string } = { jwtSecret: "dev" }) {
   const app = Fastify({ logger: { level: "info" } });
 
-  await app.register(cors, { origin: true });
+  // Request-id must be registered FIRST so every subsequent log line in
+  // the request lifecycle can include the id.
+  await registerRequestId(app);
+
+  // Env-driven CORS allow-list. `CORS_ORIGINS` is a comma-separated string;
+  // when unset/empty, we fall back to the legacy `origin: true` (reflective)
+  // behaviour for dev convenience.
+  const corsOriginsRaw = process.env.CORS_ORIGINS ?? "";
+  const corsOrigins = corsOriginsRaw
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+  await app.register(cors, {
+    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    credentials: true,
+  });
   await app.register(jwt, { secret: opts.jwtSecret });
 
   // Register the `app.authenticate` decorator BEFORE any route that uses it,
