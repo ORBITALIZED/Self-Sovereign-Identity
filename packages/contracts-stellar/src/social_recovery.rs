@@ -8,7 +8,14 @@
 //! NOTE: soroban-sdk v20 does **not** expose an `auth::Signature` type.
 //! Ed25519 signature verification is performed via `env.crypto().ed25519_verify`.
 
-use soroban_sdk::{contract, contractimpl, Bytes, BytesN, Env, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, Bytes, BytesN, Env, Map, Vec};
+
+#[contracttype]
+#[derive(Clone)]
+pub enum RecoveryKey {
+    /// Tracks attestations for a recovery request: (lost_pubkey, new_pubkey, nonce).
+    Attestation(BytesN<32>, BytesN<32>, u64),
+}
 
 #[contract]
 pub struct SocialRecoveryContract;
@@ -55,11 +62,75 @@ impl SocialRecoveryContract {
         //    `ed25519_verify(public_key, message, signature)` panics on failure.
         env.crypto().ed25519_verify(&guardian, &msg, &signature);
 
-        // 3. Append the attestation, check counter vs threshold, emit event.
-        //    (Full threshold counter logic is left as a TODO — the scaffold
-        //    demonstrates the correct signature-check path.)
+        // 3. Track which guardian attested to prevent double-counting.
+        let att_key = RecoveryKey::Attestation(
+            lost_pubkey.clone(),
+            new_pubkey.clone(),
+            nonce,
+        );
+
+        // Attestations map: guardian pubkey → has attested (bool).
+        // Count map: total number of attestations collected so far.
+        let mut att_map: Map<BytesN<32>, bool> = env
+            .storage()
+            .persistent()
+            .get(&att_key)
+            .unwrap_or(Map::new(&env));
+
+        if att_map.get(guardian.clone()).unwrap_or(false) {
+            panic!("guardian already attested for this recovery request");
+        }
+        att_map.set(guardian.clone(), true);
+        env.storage().persistent().set(&att_key, &att_map);
+
+        let attestation_count = att_map.len();
+
+        // 4. Check if threshold has been met.
+        let recovery_data: (Vec<BytesN<32>>, u32) = env
+            .storage()
+            .persistent()
+            .get(&crate::storage::DataKey::Recovery(lost_pubkey.clone()))
+            .expect("no recovery configuration for this identity");
+
+        let (guardians, threshold) = recovery_data;
+
+        // Verify the guardian is in the configured guardian set.
+        let mut is_guardian = false;
+        for g in guardians.iter() {
+            if g == guardian {
+                is_guardian = true;
+                break;
+            }
+        }
+        if !is_guardian {
+            panic!("signer is not a configured guardian");
+        }
+
+        // Emit the attestation event.
         env.events()
-            .publish(("recovery_attest",), (guardian, new_pubkey.clone()));
+            .publish(("recovery_attest",), (guardian, new_pubkey.clone(), attestation_count, threshold));
+
+        // If threshold is reached, emit recovery_complete and clean up
+        // attestation data. The bridge relayer observes this event and
+        // calls IdentityRegistry to perform the actual pubkey rotation
+        // (Soroban contracts have isolated storage — SocialRecovery
+        // cannot directly modify IdentityRegistry's state).
+        if attestation_count >= threshold {
+            env.events()
+                .publish(
+                    ("recovery_complete",),
+                    (
+                        lost_pubkey.clone(),
+                        new_pubkey.clone(),
+                        attestation_count,
+                        threshold,
+                    ),
+                );
+
+            // Clean up attestation data for this recovery request.
+            env.storage().persistent().remove(&att_key);
+        }
+
         true
     }
 }

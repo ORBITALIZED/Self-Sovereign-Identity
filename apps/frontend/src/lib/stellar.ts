@@ -32,7 +32,14 @@ export async function horizon() {
 }
 
 export async function fundTestnet(addr: StellarPubKey): Promise<void> {
-  void addr;
-  void (await sdk());
-  // TODO: use Friendbot HTTP endpoint
+  const { encodeStrkey } = await import("@ssi/sdk");
+  const strkey = encodeStrkey(addr);
+  const url = `https://friendbot.stellar.org?addr=${encodeURIComponent(strkey)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(
+      `Friendbot funding failed (${res.status}): ${(body as { detail?: string }).detail ?? res.statusText}`,
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { bytesToHex, hexToBytes, base64urlEncode, base64urlDecode } from "../src/utils/index.js";
 import { strKeyToPubKey, pubKeyToStrKey } from "../src/utils/encoding.js";
+import { isValidStrkey } from "../src/utils/_strkey.js";
 import {
   isStellarPubKey,
   isStellarStrKey,
@@ -58,6 +59,40 @@ describe("strKey encode/decode", () => {
   it("rejects wrong-length keys in encode", () => {
     expect(() => pubKeyToStrKey(new Uint8Array(31))).toThrow(/expected 32-byte/);
     expect(() => pubKeyToStrKey(new Uint8Array(33))).toThrow(/expected 32-byte/);
+  });
+});
+
+describe("isValidStrkey", () => {
+  it("returns true for valid round-tripped keys", () => {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const addr = pubKeyToStrKey(bytes);
+    expect(isValidStrkey(addr)).toBe(true);
+  });
+
+  it("returns false for wrong-length addresses", () => {
+    expect(isValidStrkey("G" + "A".repeat(10))).toBe(false);
+    expect(isValidStrkey("GA")).toBe(false);
+  });
+
+  it("returns false for non-G prefix", () => {
+    expect(isValidStrkey("A" + "B".repeat(55))).toBe(false);
+    expect(isValidStrkey("M" + "A".repeat(55))).toBe(false);
+  });
+
+  it("returns false for tampered addresses", () => {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const addr = pubKeyToStrKey(bytes);
+    const tampered = addr.slice(0, 10) + "Q" + addr.slice(11);
+    expect(isValidStrkey(tampered)).toBe(false);
+  });
+
+  it("returns false for empty string", () => {
+    expect(isValidStrkey("")).toBe(false);
+  });
+
+  it("returns false for invalid base32 chars", () => {
+    // '0' and '1' are not in the Crockford base32 alphabet
+    expect(isValidStrkey("G000000000000000000000000000000000000000000000000000000")).toBe(false);
   });
 });
 

@@ -113,6 +113,22 @@ export function decodeStrkey(addr: string): StellarPubKey {
 }
 
 /**
+ * Validate a Stellar "G…" address without throwing.
+ *
+ * Checks: prefix 'G', length == 56, valid base32 characters,
+ * correct body length (32 bytes), and valid CRC16-XMODEM checksum.
+ * Returns `true` for valid addresses, `false` for invalid ones.
+ */
+export function isValidStrkey(addr: string): boolean {
+  try {
+    decodeStrkey(addr);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Encode 32 raw ed25519 bytes into a "G…" Stellar address (56 chars).
  * Prepends the version byte (0x30 → base32 'G'), computes CRC16-XMODEM
  * over the key bytes, appends the 2-byte checksum, and base32-encodes

@@ -16,4 +16,5 @@ export * from "./constants.js";
 export * from "./utils/encoding.js";
 export * from "./utils/typeGuards.js";
 export * from "./utils/retry.js";
+export { decodeStrkey, encodeStrkey, isValidStrkey } from "./utils/_strkey.js";
 export * as Errors from "./errors.js";
