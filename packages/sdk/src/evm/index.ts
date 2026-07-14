@@ -104,9 +104,12 @@ class BridgeContract {
     // Requires a wallet client attached via setWallet() for signing.
     if (!this.p.config.rpcUrl) throw new Error("EVM RPC URL not configured");
     const { createWalletClient, custom } = await import("viem");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const wallet = createWalletClient({ transport: custom((window as any).ethereum) });
     const [account] = await wallet.getAddresses();
-    const { request } = await wallet.simulateContract({
+    // Use stand-alone simulateContract action
+    const { simulateContract } = await import("viem/actions");
+    const { request } = await simulateContract(wallet, {
       address: this.p.config.contracts.bridge,
       abi: this.abi,
       functionName: "lockAndNotify",
