@@ -153,6 +153,16 @@ snarkjs zkey export verificationkey keys/credential_final.zkey keys/verification
 | Circom errors                    | ensure `cargo` is installed before `./circom` build              |
 | Docker compose fails             | check `.env` for missing values, run `docker compose config`     |
 | Bridge relayer logs `headBehind` | Horizon is on a fork — restart the relayer after the rpc catchup |
+| `apps/api-gateway` typecheck     | the SDK must be built first; run `pnpm --filter @ssi/sdk build`  |
+|                                       and then retry. CI runs `turbo run build` so the dependency is |
+|                                       wired up automatically. |
+| SDK build fails with "module not found: snarkjs" / viem | the SDK lazy-imports these packages. If you see missing-peer errors, |
+|                                       ensure your tsconfig/module-resolution honours `"Bundler"`. |
+| `pnpm typecheck` complains about `.js` extensions | the SDK barrel imports (`./foo.js`) are intentional under |
+|                                       `moduleResolution: Bundler`. Do not strip the `.js` suffix. |
+| Foundry test reverts on role grant | deployer is no longer default-admin of `IdentitySBT`; grant the |
+|                                       `ISSUER_ROLE` to the bridge via `script/Deploy.s.sol` after |
+|                                       both contracts are deployed (this is now done automatically). |
 
 ---
 
