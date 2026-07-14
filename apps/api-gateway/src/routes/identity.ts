@@ -53,7 +53,12 @@ export async function identityRoutes(app: FastifyInstance) {
     const stellar = getStellar();
     if (!stellar) {
       reply.code(503);
-      return { error: "stellar_not_configured", retryable: true };
+      return {
+        error: "stellar_not_configured",
+        message:
+          "Set STELLAR_HORIZON_URL, STELLAR_SOROBAN_RPC_URL and STELLAR_NETWORK_PASSPHRASE to enable identity routes.",
+        retryable: true,
+      };
     }
     try {
       const txHash = await stellar.submitTransaction(body.signedInvokeXdr);
@@ -68,7 +73,12 @@ export async function identityRoutes(app: FastifyInstance) {
     const stellar = getStellar();
     if (!stellar) {
       reply.code(503);
-      return { error: "stellar_not_configured", retryable: true };
+      return {
+        error: "stellar_not_configured",
+        message:
+          "Set STELLAR_HORIZON_URL, STELLAR_SOROBAN_RPC_URL and STELLAR_NETWORK_PASSPHRASE to enable identity routes.",
+        retryable: true,
+      };
     }
     const id = await stellar.identity.get(new Uint8Array(32));
     if (!id) {
