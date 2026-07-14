@@ -192,6 +192,6 @@ impl CredentialsIssuer {
             .persistent()
             .get::<DataKey, Vec<BytesN<32>>>(&DataKey::CredIndex(subject))
             .unwrap_or(Vec::new(&env))
-            .len() as u32
+            .len()
     }
 }
