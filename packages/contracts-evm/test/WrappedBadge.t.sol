@@ -12,6 +12,7 @@ contract WrappedBadgeTest is Test {
     address admin = makeAddr("admin");
     address issuer = makeAddr("issuer");
     address holder = makeAddr("holder");
+    address stranger = makeAddr("stranger");
     bytes32 SCHEMA = keccak256("passport");
 
     event BadgeLocked(
@@ -65,6 +66,29 @@ contract WrappedBadgeTest is Test {
         sbt.ownerOf(tid);
     }
 
+    /// Strangers (and even the issuer!) cannot lock a holder's SBT.
+    /// Only the current owner of `tokenId` is allowed to call
+    /// `lockAndNotify`. The custom error `NotHolder()` must be raised.
+    function test_lock_reverts_for_non_holder() public {
+        vm.prank(issuer);
+        uint256 tid = sbt.issueCredential(
+            holder,
+            SCHEMA,
+            "QmCID",
+            uint64(block.timestamp + 30 days)
+        );
+
+        bytes32 stellarHash = keccak256("stellarPubKey");
+
+        vm.prank(stranger);
+        vm.expectRevert(WrappedBadge.NotHolder.selector);
+        bridge.lockAndNotify(tid, 1_700_000_000, stellarHash);
+    }
+
+    /// A successful lock flips `processedLocks[lockHash] = true`. After the
+    /// SBT is burned, attempting to lock the same hash again is a no-op
+    /// for token resolution (it reverts on `ownerOf`) but the lockHash
+    /// mapping MUST remain set so a future relayer-replay is rejected.
     function test_lock_replay_protected() public {
         vm.prank(issuer);
         uint256 tid = sbt.issueCredential(
@@ -75,12 +99,38 @@ contract WrappedBadgeTest is Test {
         );
 
         bytes32 stellarHash = keccak256("stellarPubKey");
+        bytes32 expectedLockHash = keccak256(
+            abi.encode(holder, tid, uint32(1_700_000_000), stellarHash)
+        );
+
         vm.prank(holder);
         bridge.lockAndNotify(tid, 1_700_000_000, stellarHash);
 
-        // re-mint + re-attempt same lock hash should revert
-        // (the bridge marks processedLocks, so a second insert of the same lock
-        //  even after a new mint won't succeed — but for safety we just test
-        //  that the existing mapping has been set.)
+        assertTrue(bridge.processedLocks(expectedLockHash));
+        // After burn, ownerOf reverts and a replay would hit the NotHolder
+        // path before reaching the processedLocks check — so we assert the
+        // mapping directly to prove the bridge recorded the lock.
+    }
+
+    /// Even if a relayer attempts to lock a token the holder just burned,
+    /// the bridge must surface a clean revert (`ownerOf` panics because the
+    /// token no longer exists) rather than silently succeeding.
+    function test_double_lock_after_burn_reverts() public {
+        vm.prank(issuer);
+        uint256 tid = sbt.issueCredential(
+            holder,
+            SCHEMA,
+            "QmCID",
+            uint64(block.timestamp + 30 days)
+        );
+
+        bytes32 stellarHash = keccak256("stellarPubKey");
+
+        vm.prank(holder);
+        bridge.lockAndNotify(tid, 1_700_000_000, stellarHash);
+
+        vm.prank(holder);
+        vm.expectRevert();
+        bridge.lockAndNotify(tid, 1_700_000_000, stellarHash);
     }
 }
