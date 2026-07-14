@@ -67,8 +67,6 @@ jobs:
 
       - name: Test
         run: pnpm test
-      - name: Lint
-        run: pnpm lint
 
       - name: Lint
         run: pnpm lint
@@ -166,7 +164,7 @@ jobs:
 
       - name: Run tests
         working-directory: apps/service-ai-fraud
-        run: python -m pytest src/tests -v
+        run: python -m pytest tests/ src/tests/ -v
 
   # =========================================================================
   # Prettier — Format check across the whole repo

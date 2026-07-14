@@ -69,11 +69,15 @@ def build_feature_vector(payload: dict, history: list[dict] | None = None) -> np
     # Feature 1: schema velocity (count in last 24h)
     schema_velocity = 0.0
     if history:
-        cutoff = (np.datetime64("now") - np.timedelta64(24, "h")).astype(object)
+        # Use nanosecond ints for type-safe comparison (issued_at is also an int).
+        cutoff_ns = int(
+            np.datetime64("now", "ns") - np.timedelta64(24, "h")
+        )
         schema_velocity = sum(
-            1 for h in history
+            1
+            for h in history
             if h.get("schema_hash") == schema_hash
-            and h.get("issued_at", 0) > cutoff
+            and int(h.get("issued_at", 0)) > cutoff_ns
         )
 
     # Feature 2: biometric entropy
@@ -94,10 +98,12 @@ def build_feature_vector(payload: dict, history: list[dict] | None = None) -> np
     if history:
         issuer_issues = [h for h in history if h.get("issuer") == issuer]
         if issuer_issues:
-            last_ts = max(h.get("issued_at", 0) for h in issuer_issues)
+            last_ts = max(int(h.get("issued_at", 0)) for h in issuer_issues)
             if last_ts > 0:
-                now_ts = np.datetime64("now").astype(np.int64)
-                time_since_last = max(0.0, (now_ts - last_ts) / 3_600_000_000_000)  # ns → hours
+                now_ns = int(np.datetime64("now", "ns"))
+                time_since_last = max(
+                    0.0, (now_ns - last_ts) / 3_600_000_000_000
+                )  # ns → hours
 
     # Feature 5: credential lifetime (normalized)
     cred_lifetime = 0.0
