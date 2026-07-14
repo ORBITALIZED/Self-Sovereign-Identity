@@ -1,0 +1,9 @@
+{
+  "_comment": "Sample input for circuits/age_verification.circom. See witness-age.sh.",
+  "min_age": "18",
+  "current_timestamp": "1700000000",
+  "dob_commitment": "0",
+  "dob_year": "2000",
+  "dob_month": "5",
+  "dob_day": "15"
+}
