@@ -34,10 +34,13 @@ export class SSIEvm {
 
 /** Sub-client for read-only queries against the `IdentityRegistry` contract. */
 class RegistryContract {
-  constructor(private p: SSIEvm, private abi = [
-    "function isIssuer(address who) view returns (bool)",
-    "function isSchema(bytes32 hash) view returns (bool)",
-  ]) {}
+  constructor(
+    private p: SSIEvm,
+    private abi = [
+      "function isIssuer(address who) view returns (bool)",
+      "function isSchema(bytes32 hash) view returns (bool)",
+    ],
+  ) {}
 
   /** True if the given address is currently an active registered issuer. */
   async isIssuer(addr: EvmAddress): Promise<boolean> {
@@ -64,10 +67,13 @@ class RegistryContract {
 
 /** Sub-client for read-only queries against the `IdentitySBT` contract. */
 class SBTContract {
-  constructor(private p: SSIEvm, private abi = [
-    "function balanceOf(address owner) view returns (uint256)",
-    "function ownerOf(uint256 tokenId) view returns (address)",
-  ]) {}
+  constructor(
+    private p: SSIEvm,
+    private abi = [
+      "function balanceOf(address owner) view returns (uint256)",
+      "function ownerOf(uint256 tokenId) view returns (address)",
+    ],
+  ) {}
 
   /** Number of SBTs the owner currently holds. */
   async balanceOf(owner: EvmAddress): Promise<bigint> {
@@ -94,10 +100,13 @@ class SBTContract {
 
 /** Sub-client for write-path calls against the `WrappedBadge` bridge contract. */
 class BridgeContract {
-  constructor(private p: SSIEvm, private abi = [
-    "function lockAndNotify(uint256 tokenId, uint32 destinationChainId, bytes32 stellarPubKeyXdrHash)",
-    "function processedLocks(bytes32) view returns (bool)",
-  ]) {}
+  constructor(
+    private p: SSIEvm,
+    private abi = [
+      "function lockAndNotify(uint256 tokenId, uint32 destinationChainId, bytes32 stellarPubKeyXdrHash)",
+      "function processedLocks(bytes32) view returns (bool)",
+    ],
+  ) {}
 
   /** Burns an SBT and emits a `BadgeLocked` event picked up by the relayer. */
   async lockAndNotify(tokenId: bigint, destChainId: number, stellarHash: `0x${string}`) {

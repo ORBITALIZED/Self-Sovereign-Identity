@@ -11,27 +11,16 @@ async function main() {
   const root = path.resolve(__dirname, "..");
   const wasm = path.join(root, "build", "age_verification_js", "age_verification.wasm");
   const zkey = path.join(root, "keys", "age_verification_final.zkey");
-  const input = JSON.parse(
-    fs.readFileSync(path.join(root, "input-age.json"), "utf8"),
-  );
+  const input = JSON.parse(fs.readFileSync(path.join(root, "input-age.json"), "utf8"));
 
   if (!fs.existsSync(wasm) || !fs.existsSync(zkey)) {
-    console.warn(
-      "⚠️  Missing artifacts — run `pnpm compile && pnpm setup` first.",
-    );
+    console.warn("⚠️  Missing artifacts — run `pnpm compile && pnpm setup` first.");
     return;
   }
 
-  const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-    input,
-    wasm,
-    zkey,
-  );
+  const { proof, publicSignals } = await snarkjs.groth16.fullProve(input, wasm, zkey);
   const vKey = JSON.parse(
-    fs.readFileSync(
-      path.join(root, "keys", "age_verification_vkey.json"),
-      "utf8",
-    ),
+    fs.readFileSync(path.join(root, "keys", "age_verification_vkey.json"), "utf8"),
   );
   const ok = await snarkjs.groth16.verify(vKey, publicSignals, proof);
   console.log("Age verification proof verified:", ok);

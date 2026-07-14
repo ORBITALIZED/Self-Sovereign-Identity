@@ -30,7 +30,7 @@ export function useBridge() {
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json() as {
+        const data = (await res.json()) as {
           events: BridgeEvent[];
           nextCursor: string | null;
           error?: string;
@@ -57,7 +57,8 @@ export function useBridge() {
 
     return () => {
       active = false;
-      if (pollRef.current) clearInterval(pollRef.current as unknown as ReturnType<typeof setInterval>);
+      if (pollRef.current)
+        clearInterval(pollRef.current as unknown as ReturnType<typeof setInterval>);
     };
   }, []);
 

@@ -31,9 +31,7 @@ export default function BridgeMonitor() {
       <div className="divide-y divide-surface-700 max-h-[420px] overflow-auto">
         {events.length === 0 && (
           <div className="px-6 py-8 text-sm text-slate-400">
-            {connected
-              ? "Waiting for the first wrapped badge…"
-              : "Connecting to bridge relay…"}
+            {connected ? "Waiting for the first wrapped badge…" : "Connecting to bridge relay…"}
           </div>
         )}
         {events.map((e) => (

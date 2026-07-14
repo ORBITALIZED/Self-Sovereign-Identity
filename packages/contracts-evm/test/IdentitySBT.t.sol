@@ -81,12 +81,7 @@ contract IdentitySBTTest is Test {
     function test_issue_reverts_for_non_issuer() public {
         vm.prank(stranger);
         vm.expectRevert();
-        sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        sbt.issueCredential(holder, SCHEMA_DEGREE, "QmCID", uint64(block.timestamp + 30 days));
     }
 
     /// Registering a schema requires DEFAULT_ADMIN_ROLE.
@@ -99,18 +94,8 @@ contract IdentitySBTTest is Test {
     /// Issue must revert when the schema has not been registered.
     function test_issue_reverts_for_unknown_schema() public {
         vm.prank(issuer);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IIdentity.UnknownSchema.selector,
-                SCHEMA_PASSPORT
-            )
-        );
-        sbt.issueCredential(
-            holder,
-            SCHEMA_PASSPORT,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        vm.expectRevert(abi.encodeWithSelector(IIdentity.UnknownSchema.selector, SCHEMA_PASSPORT));
+        sbt.issueCredential(holder, SCHEMA_PASSPORT, "QmCID", uint64(block.timestamp + 30 days));
     }
 
     /// Bridge burn must revert for non-issuer callers.
@@ -140,11 +125,6 @@ contract IdentitySBTTest is Test {
         );
 
         vm.prank(issuer);
-        sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmEventCid",
-            uint64(block.timestamp + 30 days)
-        );
+        sbt.issueCredential(holder, SCHEMA_DEGREE, "QmEventCid", uint64(block.timestamp + 30 days));
     }
 }
