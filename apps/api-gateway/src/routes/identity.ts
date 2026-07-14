@@ -37,11 +37,26 @@ function buildStellar(): SSIStellar | null {
   });
 }
 
+/** Fired exactly once per process when the gateway boots without the
+ *  Stellar env vars. Operators see one startup event per deploy rather
+ *  than N warn lines per second from per-request logging. */
+function logDegradedStartupOnce(): void {
+  console.warn(
+    "[identity] STELLAR_HORIZON_URL/STELLAR_SOROBAN_RPC_URL/STELLAR_NETWORK_PASSPHRASE not configured; " +
+      "/identity routes will return 503 STELLAR_NOT_CONFIGURED. " +
+      "See apps/api-gateway/.env.example.",
+  );
+}
+
 // Cache the SDK instance per-process so we only pay the (deferred)
-// `await import("@stellar/stellar-sdk")` cost once across all requests.
+// `await import("@stellar/stellar-sdk")` cost once across all requests,
+// and so the degraded-mode startup warn fires exactly once per process.
 let _stellar: SSIStellar | null | undefined;
 function getStellar(): SSIStellar | null {
-  if (_stellar === undefined) _stellar = buildStellar();
+  if (_stellar === undefined) {
+    _stellar = buildStellar();
+    if (_stellar === null) logDegradedStartupOnce();
+  }
   return _stellar;
 }
 
@@ -64,10 +79,6 @@ export async function identityRoutes(app: FastifyInstance) {
     const body = CreateBody.parse(req.body);
     const stellar = getStellar();
     if (!stellar) {
-      app.log.warn(
-        { requestId: req.requestId },
-        "identity route hit without STELLAR_HORIZON_URL",
-      );
       reply.code(503);
       return STELLAR_NOT_CONFIGURED_BODY;
     }
@@ -83,10 +94,6 @@ export async function identityRoutes(app: FastifyInstance) {
   app.get<{ Params: { pubkey: string } }>("/:pubkey", async (req, reply) => {
     const stellar = getStellar();
     if (!stellar) {
-      app.log.warn(
-        { requestId: req.requestId },
-        "identity route hit without STELLAR_HORIZON_URL",
-      );
       reply.code(503);
       return STELLAR_NOT_CONFIGURED_BODY;
     }
