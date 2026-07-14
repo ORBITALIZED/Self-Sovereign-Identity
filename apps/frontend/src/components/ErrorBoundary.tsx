@@ -15,6 +15,10 @@ interface State {
  * fallback instead of unmounting the whole app. Logs to the console so a
  * developer can inspect the stack; production builds could redirect the
  * log into a tracking service here.
+ *
+ * Exported both as a named and as a default export so the existing
+ * `import ErrorBoundary from ...` (default) and a future
+ * `import { ErrorBoundary } from ...` (named) both keep compiling.
  */
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
@@ -50,3 +54,5 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export default ErrorBoundary;
