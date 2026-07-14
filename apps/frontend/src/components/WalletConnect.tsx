@@ -15,10 +15,16 @@ export default function WalletConnect({ embedded = false }: { embedded?: boolean
           Choose a Stellar wallet (Freighter, xBull) or an EVM wallet (MetaMask, Rainbow).
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <Button onClick={() => connect("freighter")}>Freighter (Stellar)</Button>
-          <Button variant="secondary" onClick={() => connect("metamask")}>
-            MetaMask (EVM)
-          </Button>
+          <div className="surface-card p-3 text-center space-y-2 cursor-pointer hover:bg-surface-600 transition-colors" onClick={() => connect("freighter")}>
+            <span className="text-brand-500 font-medium">Freighter</span>
+            <p className="text-xs text-slate-400">Stellar · Soroban</p>
+            <span className="text-xs text-emerald-400">Testnet</span>
+          </div>
+          <div className="surface-card p-3 text-center space-y-2 cursor-pointer hover:bg-surface-600 transition-colors" onClick={() => connect("metamask")}>
+            <span className="text-yellow-400 font-medium">MetaMask</span>
+            <p className="text-xs text-slate-400">EVM · Polygon</p>
+            <span className="text-xs text-emerald-400">Amoy Testnet</span>
+          </div>
         </div>
       </div>
     );
@@ -51,9 +57,9 @@ export default function WalletConnect({ embedded = false }: { embedded?: boolean
           >
             <ExternalLink className="w-3 h-3" /> Disconnect
           </button>
-          {supported && (
-            <div className="text-xs text-slate-500 mt-2">Multiple chains supported</div>
-          )}
+          <div className="text-xs text-slate-500 mt-2">
+            {isStellar ? "Stellar Testnet" : "Polygon Amoy"}{supported ? " · Multi-chain ready" : ""}
+          </div>
         </div>
       )}
     </div>
