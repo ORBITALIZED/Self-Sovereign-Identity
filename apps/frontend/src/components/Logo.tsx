@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { Shield } from "lucide-react";
+import clsx from "clsx";
 
 export interface LogoProps {
   /** Render as a router Link (default) or a static `<div>`. */
   asLink?: boolean;
-  /** Optional extra class names. */
+  /** Optional extra class names merged with the default ones. */
   className?: string;
   /** Override the visible brand name. */
   text?: string;
@@ -28,20 +29,13 @@ export default function Logo({
   );
   if (!asLink) {
     return (
-      <div
-        className={"flex items-center gap-2 text-xl font-semibold " + (className ?? "")}
-        aria-label={text}
-      >
+      <div className={clsx("flex items-center gap-2 text-xl font-semibold", className)} aria-label={text}>
         {inner}
       </div>
     );
   }
   return (
-    <Link
-      to="/"
-      className={"flex items-center gap-2 text-xl font-semibold " + (className ?? "")}
-      aria-label={text}
-    >
+    <Link to="/" className={clsx("flex items-center gap-2 text-xl font-semibold", className)} aria-label={text}>
       {inner}
     </Link>
   );
