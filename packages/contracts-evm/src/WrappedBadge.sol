@@ -54,12 +54,15 @@ contract WrappedBadge is AccessControl, IIdentity {
         selfChainId = chainId_;
     }
 
-    /// @notice Lock & notify. Burns the SBT and emits an event consumed by
-    ///         the bridge relayer which will mint a wrapped asset on Stellar.
-    /// @dev    Caller must be the current holder of `tokenId`. The same
-    ///         `(holder, tokenId, destinationChainId, stellarPubKeyXdrHash)`
-    ///         tuple cannot be submitted twice (replay protection).
-    /// @param  tokenId The SBT that will be burned.
+/// @notice Lock & notify. Burns the SBT and emits an event consumed by
+///         the bridge relayer which will mint a wrapped asset on Stellar.
+/// @dev    Caller must be the current holder of `tokenId`. The same
+///         `(holder, tokenId, destinationChainId, stellarPubKeyXdrHash)`
+///         tuple cannot be submitted twice (replay protection).
+///
+///         Reentrancy-safe: performs external call (bridgeBurn) AFTER
+///         updating `processedLocks`, following checks-effects-interactions.
+/// @param  tokenId The SBT that will be burned.
     /// @param  destinationChainId Chain ID of the Soroban network to wrap into.
     /// @param  stellarPubKeyXdrHash Hash of the Stellar pubkey the wrapped badge will be issued to.
     function lockAndNotify(

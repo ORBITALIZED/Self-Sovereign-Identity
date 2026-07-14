@@ -36,6 +36,16 @@ export interface Credential {
   revoked: boolean;
 }
 
+/** Discriminated union for credential status. */
+export type CredentialStatus = "active" | "revoked" | "expired";
+
+/** Helper: determine credential status from valid_until and revoked flag. */
+export function credentialStatus(cred: Credential): CredentialStatus {
+  if (cred.revoked) return "revoked";
+  if (cred.validUntil > 0 && cred.validUntil < Math.floor(Date.now() / 1000)) return "expired";
+  return "active";
+}
+
 export interface WrappedBadge {
   subjectPubkey: StellarPubKey;
   sourceChainId: number;
