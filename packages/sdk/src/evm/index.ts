@@ -6,6 +6,14 @@ import { createPublicClient, http, type PublicClient, type WalletClient } from "
 import type { EvmAddress, EvmConfig } from "../types/index.js";
 import { ChainConnectionError } from "../errors.js";
 
+/**
+ * EVM client — wraps viem and exposes the SSI contract surface.
+ *
+ * Initialise it once with the chain configuration; the resulting public
+ * client can be used directly or accessed through the `registry`, `sbt`
+ * and `bridge` sub-clients. A wallet client can be attached later via
+ * {@link SSIEvm.setWallet} for write-path call building.
+ */
 export class SSIEvm {
   public readonly publicClient: PublicClient;
 
@@ -24,8 +32,10 @@ export class SSIEvm {
   }
 }
 
+/** Sub-client for read-only queries against the `IdentityRegistry` contract. */
 class RegistryContract {
   constructor(private p: SSIEvm) {}
+  /** True if the given address is currently an active registered issuer. */
   async isIssuer(addr: EvmAddress): Promise<boolean> {
     // abi.encode call + read
     void this.p;
@@ -34,8 +44,10 @@ class RegistryContract {
   }
 }
 
+/** Sub-client for read-only queries against the `IdentitySBT` contract. */
 class SBTContract {
   constructor(private p: SSIEvm) {}
+  /** Number of non-revoked SBTs the owner currently holds. */
   async balanceOf(owner: EvmAddress): Promise<bigint> {
     void this.p;
     void owner;
@@ -43,8 +55,10 @@ class SBTContract {
   }
 }
 
+/** Sub-client for write-path calls against the `WrappedBadge` bridge contract. */
 class BridgeContract {
   constructor(private p: SSIEvm) {}
+  /** Burns an SBT and emits a `BadgeLocked` event picked up by the relayer. */
   async lockAndNotify(_tokenId: bigint, _destChainId: number, _stellarHash: `0x${string}`) {
     void this.p;
     throw new Error("not implemented yet");
