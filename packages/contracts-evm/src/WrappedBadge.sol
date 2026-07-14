@@ -18,6 +18,12 @@ contract WrappedBadge is AccessControl, IIdentity {
     /// @notice Hash that prevents replay across chains.
     mapping(bytes32 => bool) public processedLocks;
 
+    /// @notice Emitted when an SBT is locked-and-moved to a Stellar-native wrapped asset.
+    /// @param  holder The EVM address that owned the SBT pre-burn.
+    /// @param  schemaHash Schema hash of the burned credential.
+    /// @param  tokenId  The burned token's id (== 0 after the `_burn`).
+    /// @param  destinationChainId Chain id of the destination network.
+    /// @param  stellarPubKeyXdrHash Hash of the recipient Stellar pubkey.
     event BadgeLocked(
         address indexed holder,
         bytes32 indexed schemaHash,
@@ -25,6 +31,11 @@ contract WrappedBadge is AccessControl, IIdentity {
         uint32 destinationChainId,
         bytes32 stellarPubKeyXdrHash
     );
+
+    /// @notice The caller is not the current owner of the SBT being locked.
+    error NotHolder();
+    /// @notice The same lock tuple has already been processed (replay).
+    error ReplayLock();
 
     // NOTE: `badge` and `selfChainId` immutables are declared at the top of
     //       this contract. Do NOT re-declare them here.
@@ -45,19 +56,25 @@ contract WrappedBadge is AccessControl, IIdentity {
 
     /// @notice Lock & notify. Burns the SBT and emits an event consumed by
     ///         the bridge relayer which will mint a wrapped asset on Stellar.
+    /// @dev    Caller must be the current holder of `tokenId`. The same
+    ///         `(holder, tokenId, destinationChainId, stellarPubKeyXdrHash)`
+    ///         tuple cannot be submitted twice (replay protection).
+    /// @param  tokenId The SBT that will be burned.
+    /// @param  destinationChainId Chain ID of the Soroban network to wrap into.
+    /// @param  stellarPubKeyXdrHash Hash of the Stellar pubkey the wrapped badge will be issued to.
     function lockAndNotify(
         uint256 tokenId,
         uint32 destinationChainId,
         bytes32 stellarPubKeyXdrHash
     ) external {
         address holder = badge.ownerOf(tokenId);
-        require(holder == msg.sender, "SSI: only holder can lock");
+        if (holder != msg.sender) revert NotHolder();
 
         (bytes32 schemaHash, , , , ) = badge.credentials(tokenId);
         bytes32 lockHash = keccak256(
             abi.encode(holder, tokenId, destinationChainId, stellarPubKeyXdrHash)
         );
-        require(!processedLocks[lockHash], "SSI: replay");
+        if (processedLocks[lockHash]) revert ReplayLock();
         processedLocks[lockHash] = true;
 
         badge.bridgeBurn(tokenId);
