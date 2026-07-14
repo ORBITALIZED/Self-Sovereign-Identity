@@ -164,7 +164,11 @@ jobs:
 
       - name: Run tests
         working-directory: apps/service-ai-fraud
-        run: python -m pytest tests/ src/tests/ -v
+        run: python -m pytest tests/ src/tests/ -v --tb=short
+
+      - name: Run ruff lint
+        working-directory: apps/service-ai-fraud
+        run: python -m ruff check src/ tests/
 
   # =========================================================================
   # Prettier — Format check across the whole repo
