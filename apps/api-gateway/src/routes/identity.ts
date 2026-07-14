@@ -63,12 +63,13 @@ export async function identityRoutes(app: FastifyInstance) {
   // Operators see this regardless of /identity traffic, and the line flows
   // through Fastify's structured Pino logger so it joins the JSON log stream
   // used elsewhere in the system.
-  // Suppressed under vitest runs (VITEST env) so test output isn't polluted
-  // by one warn line per `build()` invocation across the test suite. Using
-  // VITEST rather than NODE_ENV=test makes the gate vitest-aware directly.
+  // Suppressed under vitest runs (VITEST env) AND under ad-hoc smoke
+  // scripts that set NODE_ENV=test without going through vitest, so test
+  // output isn't polluted by one warn line per `build()` invocation.
   if (
     process.env.STELLAR_HORIZON_URL === undefined &&
-    !process.env.VITEST
+    !process.env.VITEST &&
+    process.env.NODE_ENV !== "test"
   ) {
     app.log.warn(
       "STELLAR_HORIZON_URL not configured — /identity routes will return 503 STELLAR_NOT_CONFIGURED; see apps/api-gateway/.env.example",
