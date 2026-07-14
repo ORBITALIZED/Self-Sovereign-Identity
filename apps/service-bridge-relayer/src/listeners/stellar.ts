@@ -38,6 +38,9 @@ export async function startStellarListener() {
           case "badge_wrapped":
             stellarBus.emit("badge_wrapped", ev);
             break;
+          case "recovery_complete":
+            stellarBus.emit("recovery_complete", ev);
+            break;
         }
         lastCursor = ev.paging_token;
       }
