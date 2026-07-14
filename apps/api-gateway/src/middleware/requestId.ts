@@ -17,8 +17,13 @@ const ALLOWED = /^[A-Za-z0-9._-]+$/;
 
 declare module "fastify" {
   interface FastifyRequest {
-    /** Stable id for this request. Set by `requestIdPlugin`. */
-    requestId: string;
+    /**
+     * Stable id for this request. Set by `requestIdPlugin`. Marked
+     * optional because errors raised BEFORE the `onRequest` hook
+     * (e.g. body-parser failures, router mismatches) can reach this
+     * middleware without a populated value.
+     */
+    requestId?: string;
   }
 }
 

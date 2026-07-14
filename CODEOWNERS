@@ -37,6 +37,8 @@
 /apps/service-ipfs/                    @ssi/backend-maintainers
 /apps/service-ai-fraud/                @ssi/backend-maintainers  @ssi/ml-maintainers
 
-# Secret-touching files get an extra reviewer.
-**/.env*                              @ssi/platform-team  @ssi/security-team
-SECURITY.md                           @ssi/platform-team  @ssi/security-team
+# Secret-touching files get an extra reviewer. SECURITY.md is already
+# covered at the top-level `/SECURITY.md` rule above; the `.env*`
+# pattern below does NOT re-pick it up because it specifically excludes
+# real `.env` files from CI.
+**/.env*   @ssi/platform-team  @ssi/security-team

@@ -85,11 +85,13 @@ contract WrappedBadgeTest is Test {
         bridge.lockAndNotify(tid, 1_700_000_000, stellarHash);
     }
 
-    /// A successful lock flips `processedLocks[lockHash] = true`. After the
-    /// SBT is burned, attempting to lock the same hash again is a no-op
-    /// for token resolution (it reverts on `ownerOf`) but the lockHash
-    /// mapping MUST remain set so a future relayer-replay is rejected.
-    function test_lock_replay_protected() public {
+    /// Side-effect check: a successful lock must flip
+    /// `processedLocks[lockHash] = true`. After the burn, replaying the
+    /// same hash reverts on `ownerOf` first, so the replay test cannot
+    /// observe the `ReplayLock` revert directly; we instead pin the
+    /// observable side-effect (the mapping flipping) and the double-lock
+    /// scenario in `test_double_lock_after_burn_reverts`.
+    function test_lock_marks_processedLocks() public {
         vm.prank(issuer);
         uint256 tid = sbt.issueCredential(
             holder,
@@ -107,9 +109,6 @@ contract WrappedBadgeTest is Test {
         bridge.lockAndNotify(tid, 1_700_000_000, stellarHash);
 
         assertTrue(bridge.processedLocks(expectedLockHash));
-        // After burn, ownerOf reverts and a replay would hit the NotHolder
-        // path before reaching the processedLocks check — so we assert the
-        // mapping directly to prove the bridge recorded the lock.
     }
 
     /// Even if a relayer attempts to lock a token the holder just burned,
