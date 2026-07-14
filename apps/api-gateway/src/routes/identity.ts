@@ -1,17 +1,37 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-// Note: Sub-path exports (@ssi/sdk/stellar, @ssi/sdk/zkp) require the SDK
-// to be built first. Import from barrel until SDK is compiled.
 import { SSIStellar } from "@ssi/sdk";
 
-const stellar = new SSIStellar({
-  horizonUrl: process.env.STELLAR_HORIZON_URL!,
-  rpcUrl: process.env.STELLAR_SOROBAN_RPC_URL!,
-  networkPassphrase: process.env.STELLAR_NETWORK_PASSPHRASE!,
-  identityContractId: process.env.STELLAR_IDENTITY_CONTRACT ?? "",
-  wrappedBadgeContractId: process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "",
-  sorobanRpcUrl: process.env.STELLAR_SOROBAN_RPC_URL,
-});
+/**
+ * Construct the Stellar client lazily, on first use, so the gateway can
+ * boot (and serve other routes like /health, /ready, /bridge/wrapped)
+ * even when `STELLAR_HORIZON_URL` is not configured.
+ *
+ * If env vars are missing at request time, we return `null` and the route
+ * handler responds with a 503 + `stellar_not_configured` instead of
+ * letting the SDK throw a `ChainConnectionError`.
+ */
+function buildStellar(): SSIStellar | null {
+  const horizonUrl = process.env.STELLAR_HORIZON_URL;
+  if (!horizonUrl) return null;
+
+  return new SSIStellar({
+    horizonUrl,
+    rpcUrl: process.env.STELLAR_SOROBAN_RPC_URL ?? "",
+    networkPassphrase: process.env.STELLAR_NETWORK_PASSPHRASE ?? "",
+    identityContractId: process.env.STELLAR_IDENTITY_CONTRACT ?? "",
+    wrappedBadgeContractId: process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "",
+    sorobanRpcUrl: process.env.STELLAR_SOROBAN_RPC_URL,
+  });
+}
+
+// Cache the SDK instance per-process so we only pay the (deferred)
+// `await import("@stellar/stellar-sdk")` cost once across all requests.
+let _stellar: SSIStellar | null | undefined;
+function getStellar(): SSIStellar | null {
+  if (_stellar === undefined) _stellar = buildStellar();
+  return _stellar;
+}
 
 // NOTE: the API never accepts a secret key — authentication happens with JWT
 // and Soroban `invokeContract` is signed client-side via Freighter. This
@@ -30,6 +50,11 @@ export async function identityRoutes(app: FastifyInstance) {
   // The route is JWT-protected; downstream services verify the signature.
   app.post("/", { preHandler: [app.authenticate] }, async (req, reply) => {
     const body = CreateBody.parse(req.body);
+    const stellar = getStellar();
+    if (!stellar) {
+      reply.code(503);
+      return { error: "stellar_not_configured", retryable: true };
+    }
     try {
       const txHash = await stellar.submitTransaction(body.signedInvokeXdr);
       return { accepted: true, txHash };
@@ -40,6 +65,11 @@ export async function identityRoutes(app: FastifyInstance) {
   });
 
   app.get<{ Params: { pubkey: string } }>("/:pubkey", async (req, reply) => {
+    const stellar = getStellar();
+    if (!stellar) {
+      reply.code(503);
+      return { error: "stellar_not_configured", retryable: true };
+    }
     const id = await stellar.identity.get(new Uint8Array(32));
     if (!id) {
       reply.code(404);
