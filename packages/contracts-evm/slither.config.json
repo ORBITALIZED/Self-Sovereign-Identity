@@ -1,4 +1,5 @@
 {
   "detectors_to_exclude": "naming-convention,solc-version,pragma",
-  "filter_paths": "node_modules|lib/|test/|script/"
+  "filter_paths": "node_modules|lib/|test/|script/",
+  "detectors_to_run": "reentrancy-eth,unchecked-lowlevel,suicidal,uninitialized-state,uninitialized-local,unused-return,shadowing-state,shadowing-abstract,missing-zero-check,incorrect-equality,timestamp,assembly,boolean-cst,constant-function-asm,controlled-delegatecall,erc20-indexed,erc721-interface,locked-ether,reentrancy-no-eth,reentrancy-unlimited-gas,reentrancy-benign,reentrancy-events,tx-origin,unchecked-transfer"
 }
