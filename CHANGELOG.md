@@ -9,6 +9,65 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com),
 and the project follows [Semantic Versioning](https://semver.org/) for the
 SDK (`@ssi/sdk`) sub-packages.
 
+## [Unreleased] — Phase 2 feature batch 2026-07-14
+
+### Added (apps/frontend)
+
+- Real wallet detection: Freighter `getPublicKey()` and MetaMask `eth_requestAccounts`
+- Bridge SSE polling via `/api/bridge/wrapped` with cursor-based pagination
+- BridgeMonitor replaced fake `setInterval` data with real `useBridge` hook
+- Connection state indicator (streaming/connecting) in BridgeMonitor
+
+### Added (packages/sdk)
+
+- `isValidStrkey()` non-throwing Stellar address validation with 6 unit tests
+- EVM client methods: `isIssuer()`, `isSchema()`, `balanceOf()`, `ownerOf()`,
+  `lockAndNotify()` with real viem `readContract`/`simulateContract` calls
+
+### Added (apps/api-gateway)
+
+- Shared `lib/stellarClient.ts` singleton extracted from identity/credential routes
+- Credential routes wired to Soroban SDK with `/count` endpoint
+- Forward `signedInvokeXdr` in credential POST (matching identity route pattern)
+
+### Added (apps/service-bridge-relayer)
+
+- Real Horizon SSE event stream parsing (ReadableStream-based, with cursor resumption)
+- `recovery_complete` event listener in Stellar listener loop
+- `onRecoveryComplete()` helper export
+
+### Added (apps/service-ai-fraud)
+
+- 7-feature extraction pipeline: issuer_reputation, schema_velocity, biometric_entropy,
+  ip_country_mismatch, time_since_last_issue, credential_lifetime, duplicate_schema
+- `/train` endpoint with logistic regression fit, balanced class weights, joblib export
+
+### Added (packages/contracts-evm)
+
+- 5 new IdentitySBT tests: non-issuer rejection, non-admin schema registration,
+  unknown schema rejection, bridge burn access control, CredentialIssued event
+- `test_lock_replay_different_chain_reverts` for WrappedBadge replay protection
+- Enhanced Slither config with comprehensive detector list
+
+### Added (packages/contracts-stellar)
+
+- Guardian threshold counter in social_recovery.rs: attestation tracking, duplicate
+  prevention, guardian validation, `recovery_complete` event emission on threshold
+- `RecoveryKey` contracttype for attestation data storage
+
+### Added (packages/zk-circuits)
+
+- Real Poseidon-compatible witness inputs in `input.json` and `input-age.json`
+- `test/age.test.js` smoke test for age_verification circuit
+
+### Changed
+
+- CI: removed `continue-on-error` from JS/TS lint step
+- `IdentityRegistry.holderSchemas` made non-public with explicit `getHolderSchemas()` getter
+- `@ssi/zk-circuits` test script now runs both credential and age verification tests
+
+---
+
 ## [Unreleased] — polish batch 2026-07-14
 
 ### Added (apps/frontend)
