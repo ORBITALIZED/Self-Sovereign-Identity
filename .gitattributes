@@ -1,0 +1,29 @@
+# Ensure consistent line endings across the monorepo.
+# Whitespace matters for some build tools (rustfmt, circom compiler,
+# forge). Editors that re-save files locally on Windows/macOS should
+# normalise as below on commit.
+
+# Default to LF everywhere
+* text=auto eol=lf
+
+# Source files whose diff would be misleading with CRLF
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.rs        text eol=lf
+*.sol       text eol=lf
+*.circom    text eol=lf
+
+# Shell scripts MUST use LF (DOS line endings break shebangs on some systems)
+*.sh        text eol=lf
+
+# Generated / vendored artefacts that we don't diff meaningfully
+pnpm-lock.yaml   text eol=lf -diff
+Cargo.lock       text eol=lf -diff
