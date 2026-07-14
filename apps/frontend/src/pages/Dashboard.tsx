@@ -4,12 +4,44 @@ import { Button } from "../components/ui/Button.js";
 import { Card } from "../components/ui/Card.js";
 import { Skeleton } from "../components/ui/Skeleton.js";
 import { api } from "../lib/api.js";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, GraduationCap, Briefcase, HeartPulse, Lock } from "lucide-react";
+
+const ICON_MAP: Record<string, React.ReactNode> = {
+  education: <GraduationCap className="w-4 h-4" />,
+  employment: <Briefcase className="w-4 h-4" />,
+  medical: <HeartPulse className="w-4 h-4" />,
+  default: <Lock className="w-4 h-4" />,
+};
 
 export default function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["identity"],
     queryFn: () => api.identity.getMe().catch(() => null),
+  });
+
+  const credentials = useQuery({
+    queryKey: ["credentials", data?.identity?.pubkey],
+    queryFn: async () => {
+      if (!data?.identity?.pubkey) return [];
+      const address = Array.from(data.identity.pubkey as Uint8Array)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      try {
+        const res = await fetch(`/api/credentials/${address}/count`);
+        if (!res.ok) return [];
+        const body = await res.json() as { count: number };
+        return Array.from({ length: body.count }, (_, i) => ({
+          id: `${i}`,
+          title: `Credential #${i + 1}`,
+          year: 2025,
+          status: "valid" as const,
+          kind: "default",
+        }));
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!data?.identity?.pubkey,
   });
 
   return (
@@ -41,16 +73,28 @@ export default function Dashboard() {
         )}
 
         <Card className="p-6">
-          <h3 className="font-semibold mb-3">Recent credentials</h3>
+          <h3 className="font-semibold mb-3">
+            Recent credentials ({credentials.data?.length ?? 0})
+          </h3>
+          {credentials.isLoading && (
+            <div className="space-y-2">
+              <Skeleton width="w-full" height="h-10" />
+              <Skeleton width="w-full" height="h-10" />
+            </div>
+          )}
+          {credentials.data && credentials.data.length === 0 && (
+            <p className="text-sm text-slate-400">No credentials issued yet.</p>
+          )}
           <ul className="text-sm text-slate-300 space-y-2">
-            {[
-              "University degree – Universidad de los Andes",
-              "Employment letter – Acme Colombia",
-              "KYC passport – gov.br",
-            ].map((c) => (
-              <li key={c} className="surface-card px-3 py-2 flex justify-between">
-                <span>{c}</span>
-                <span className="text-xs text-emerald-400">valid</span>
+            {credentials.data?.map((c) => (
+              <li key={c.id} className="surface-card px-3 py-2 flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2">
+                  <span className="text-brand-500">
+                    {ICON_MAP[c.kind] ?? ICON_MAP.default}
+                  </span>
+                  {c.title}
+                </span>
+                <span className="text-xs text-emerald-400">{c.status}</span>
               </li>
             ))}
           </ul>
@@ -61,14 +105,14 @@ export default function Dashboard() {
         <Card className="p-6">
           <h3 className="font-semibold mb-2">Cross-chain status</h3>
           <p className="text-sm text-slate-400">
-            Bridge relayer is <span className="text-emerald-400">healthy</span>. 0 wrapped badges
-            minted this session.
+            Bridge relayer is <span className="text-emerald-400">healthy</span>.{" "}
+            {data ? "Ready for cross-chain operations." : "Create an identity to bridge."}
           </p>
         </Card>
         <Card className="p-6">
-          <h3 className="font-semibold mb-2">AI fraud score</h3>
+          <h3 className="font-semibold mb-2">Guardians</h3>
           <p className="text-sm text-slate-400">
-            Last score for you: <span className="text-emerald-400">0.07 (low risk)</span>
+            {data?.identity?.recoveryOwners?.length ?? 0} guardians configured for social recovery.
           </p>
         </Card>
       </div>
