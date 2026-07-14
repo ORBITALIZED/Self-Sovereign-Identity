@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
-import { Shield, KeyRound, Globe2, BadgeCheck, Activity } from "lucide-react";
+import { Shield, KeyRound, BadgeCheck, Activity } from "lucide-react";
 import WalletConnect from "./WalletConnect.js";
 import Logo from "./Logo.js";
 
