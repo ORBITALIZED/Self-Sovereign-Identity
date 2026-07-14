@@ -74,6 +74,44 @@ CI will block merge if:
 
 ---
 
+## Pull request template
+
+When opening a PR, include:
+
+```markdown
+## Summary
+<!-- One sentence on what this PR does. -->
+
+## Motivation
+<!-- Why is this change needed? Link issues if applicable. -->
+
+## Test plan
+<!-- How did you verify this change? List commands or describe manual steps. -->
+- [ ] CI passes locally (`make ci`)
+- [ ] New tests added for new behaviour
+- [ ] Manual smoke test performed
+
+## Checklist
+- [ ] I have run `make format`
+- [ ] I have added/updated tests
+- [ ] I have updated CHANGELOG.md
+- [ ] This PR targets `main` from a `feature/*` / `fix/*` branch
+```
+
+---
+
+## Release process (maintainers)
+
+1. Ensure `CHANGELOG.md` has a dated `[Unreleased]` entry summarising all
+   merged PRs since the last tag.
+2. Bump the SDK version in `packages/sdk/package.json` if any SDK-facing
+   API changed. Follow semver.
+3. Tag the release: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
+4. Push the tag: `git push origin vX.Y.Z`
+5. CI will publish `@ssi/sdk` to npm on tag push.
+
+---
+
 ## Security disclosures
 
 Email **security@ssi.example** — do **not** file a public GitHub issue.
