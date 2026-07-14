@@ -1,16 +1,14 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
 import { Shield, KeyRound, Globe2, BadgeCheck, Activity } from "lucide-react";
 import WalletConnect from "./WalletConnect.js";
+import Logo from "./Logo.js";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-surface-950 via-surface-900 to-brand-900/20">
       <header className="flex items-center justify-between px-6 py-4 border-b border-surface-700">
-        <Link to="/" className="flex items-center gap-2 text-xl font-semibold">
-          <Shield className="w-6 h-6 text-brand-500" />
-          <span className="gradient-text">Self-Sovereign Identity</span>
-        </Link>
+        <Logo />
 
         <nav className="hidden md:flex items-center gap-1 text-sm">
           {NAV.map((n) => (
