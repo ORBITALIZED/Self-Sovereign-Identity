@@ -35,8 +35,6 @@ contract IdentityRegistry is AccessControl, IIdentity {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
-    /// @notice The address attempting to call a registrar-gated function is not authorised.
-    error NotRegistrar(address caller);
     /// @notice The issuer being registered has already been recorded.
     error AlreadyRegistered(address issuer);
     /// @notice The schema being registered has already been recorded.

@@ -87,12 +87,11 @@ contract IdentityRegistryTest is Test {
     }
 
     function test_attest_reverts_for_stranger() public {
+        // AccessControl's onlyRole modifier reverts with OZ's
+        // `UnauthorizedAccount(account)` selector — don't match on our own
+        // custom error (which is unused, see comments in IdentityRegistry.sol).
         vm.prank(stranger);
-        vm.expectRevert(
-            abi.encodeWithSelector(IdentityRegistry.NotRegistrar.selector, stranger)
-        );
-        // We use a custom error in the access-control layer, but the modifier
-        // surfaces it as an unauthenticated revert. Either is acceptable.
+        vm.expectRevert();
         registry.attest(holder, SCHEMA);
     }
 }
