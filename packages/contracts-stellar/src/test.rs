@@ -125,12 +125,12 @@ fn revoke_credential_flow() {
     assert!(stored.revoked);
 }
 
-/// The original `revoke_credential_flow` is the happy-path test.
-/// A "different issuer tries to revoke" path would need a second *valid*
-/// Soroban `Address` (each must be a CRC16-XMODEM-valid strkey), so we
-/// skip that case here. The behavior is enforced by line 113 of
-/// `credentials.rs` (`if cred.issuer != issuer { panic!(...) }`); any
-/// PR that breaks it will be caught by the SDK's existing
-/// `wrap`/`unwrap` flow tests, while this file stays focused on
-/// invariants that can be exercised with the testutils Address helper
-/// without hand-rolling CRC16-valid strkeys.
+// The original `revoke_credential_flow` is the happy-path test.
+// A "different issuer tries to revoke" path would need a second *valid*
+// Soroban `Address` (each must be a CRC16-XMODEM-valid strkey), so we
+// skip that case here. The behavior is enforced by line 113 of
+// `credentials.rs` (`if cred.issuer != issuer { panic!(...) }`); any
+// PR that breaks it will be caught by the SDK's existing
+// `wrap`/`unwrap` flow tests, while this file stays focused on
+// invariants that can be exercised with the testutils Address helper
+// without hand-rolling CRC16-valid strkeys.
