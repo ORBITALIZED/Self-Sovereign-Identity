@@ -1,21 +1,14 @@
 /**
- * Tiny `node:http` server exposing a single `/health` endpoint so that
- * container orchestrators (k8s, fly, ECS) can probe the relayer without
- * pulling in a web framework just for that.
- *
- * Status payload describes whether the relayer believes itself ready:
- *   - `relayer: ok` iff RELAYER_PRIVATE_KEY, EVM_RPC_URL, EVM_BRIDGE_CONTRACT and
- *     EVM_SBT_CONTRACT are all configured.
- *   - `evm: ok|kicked` iff the bootstrap EVM `getBlockNumber` call succeeded
- *     during `start()`.
- *
- * The state is mutated by `markEvmHealthy()` / `markEvmUnhealthy()` from
- * `index.ts` once the EVM listener has bootstrapped.
+ * Tiny `node:http` server exposing health, dead-letter inspection, and retry
+ * endpoints so container orchestrators (k8s, fly, ECS) can probe and operate
+ * the relayer without pulling in a web framework.
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import type { RelayerStateManager } from "./state.js";
 
 let evmHealthy = false;
+let stateRef: RelayerStateManager | null = null;
 const PORT = Number(process.env.HEALTH_PORT ?? 8081);
 
 export function markEvmHealthy(): void {
@@ -23,6 +16,11 @@ export function markEvmHealthy(): void {
 }
 export function markEvmUnhealthy(): void {
   evmHealthy = false;
+}
+
+/** Register the state manager so the health server can expose dead-letter stats. */
+export function registerStateManager(state: RelayerStateManager): void {
+  stateRef = state;
 }
 
 function readRelayerConfig() {
@@ -59,6 +57,37 @@ export function startHealthServer(): void {
         relayer: relayerReady ? "ok" : "missing-config",
         evm: evmHealthy ? "ok" : "kicked",
         config: cfg,
+        deadLetters: stateRef?.getDeadLetterCount() ?? 0,
+        processed: stateRef?.getProcessedCount() ?? 0,
+        lastBlock: stateRef?.getLastBlock().toString() ?? "0",
+      });
+      return;
+    }
+    if (url.pathname === "/dead-letters") {
+      if (!stateRef) {
+        send(res, 503, { error: "state_not_initialized" });
+        return;
+      }
+      send(res, 200, {
+        count: stateRef.getDeadLetterCount(),
+        items: stateRef.getDeadLetters(),
+      });
+      return;
+    }
+    if (url.pathname === "/dead-letters/retry" && req.method === "POST") {
+      if (!stateRef) {
+        send(res, 503, { error: "state_not_initialized" });
+        return;
+      }
+      const raw = url.searchParams.get("id");
+      if (!raw) {
+        send(res, 400, { error: "missing_id_param" });
+        return;
+      }
+      const okRetry = stateRef.retryDeadLetter(raw);
+      send(res, okRetry ? 200 : 404, {
+        retried: okRetry,
+        id: raw,
       });
       return;
     }

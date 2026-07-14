@@ -119,6 +119,24 @@ export class RelayerStateManager {
     return [...this.state.deadLetters];
   }
 
+  getDeadLetterCount(): number {
+    return this.state.deadLetters.length;
+  }
+
+  /** Retry a dead-letter event by removing it from the queue and resetting retry count. */
+  retryDeadLetter(eventId: string): boolean {
+    const idx = this.state.deadLetters.indexOf(eventId);
+    if (idx === -1) return false;
+    this.state.deadLetters.splice(idx, 1);
+    this.retries.delete(eventId);
+    this.scheduleSave();
+    return true;
+  }
+
+  getProcessedCount(): number {
+    return this.state.processedEvents.length;
+  }
+
   /** Prune processed events and dead-letter lists to prevent unbounded growth. */
   private prune(): void {
     if (this.state.processedEvents.length > MAX_PROCESSED) {

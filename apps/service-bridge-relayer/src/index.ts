@@ -11,7 +11,7 @@ import pino from "pino";
 import { startStellarListener } from "./listeners/stellar.js";
 import { startEvmListener } from "./listeners/evm.js";
 import { startHorizonStream } from "./horizon/client.js";
-import { startHealthServer, markEvmHealthy } from "./health.js";
+import { startHealthServer, markEvmHealthy, registerStateManager } from "./health.js";
 import { RelayerStateManager } from "./state.js";
 
 const log = pino({ level: process.env.LOG_LEVEL ?? "info" });
@@ -22,6 +22,7 @@ async function main() {
   // Load persisted state for crash recovery.
   const state = new RelayerStateManager();
   await state.load();
+  registerStateManager(state);
 
   startHealthServer();
   startStellarListener();
