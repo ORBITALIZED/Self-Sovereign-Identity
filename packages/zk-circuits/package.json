@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "bash scripts/compile.sh",
     "setup": "bash scripts/setup.sh",
-    "test": "node test/credential.test.js",
+    "test": "node test/credential.test.js && node test/age.test.js",
     "clean": "rimraf build keys"
   },
   "devDependencies": {
