@@ -12,5 +12,8 @@ export * from "./stellar/index.js";
 export * from "./evm/index.js";
 export * from "./zkp/index.js";
 export * from "./types/index.js";
+export * from "./constants.js";
 export * from "./utils/encoding.js";
+export * from "./utils/typeGuards.js";
+export * from "./utils/retry.js";
 export * as Errors from "./errors.js";

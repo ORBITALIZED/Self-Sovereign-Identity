@@ -1,6 +1,6 @@
 {
   "name": "@ssi/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript SDK for the Self-Sovereign Identity platform — wraps Stellar (Soroban + Horizon), EVM (viem) and ZK (snarkjs) into one ergonomic API.",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,6 +30,11 @@
       "types": "./dist/zkp/index.d.ts",
       "import": "./dist/zkp/index.mjs",
       "require": "./dist/zkp/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.mjs",
+      "require": "./dist/utils/index.js"
     }
   },
   "scripts": {
