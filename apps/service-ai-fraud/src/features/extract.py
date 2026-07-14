@@ -2,20 +2,130 @@
 
 The full pipeline ingests labelled issuance events from Postgres and turns
 them into a (n_samples, n_features) X / y pair for fit().
+
+Features extracted (7 total):
+  0 — issuer_reputation    (1.0 = well-known issuer, 0 = unknown)
+  1 — schema_velocity      (credentials issued for this schema in last 24h)
+  2 — biometric_entropy    (Shannon entropy of biometric template)
+  3 — ip_country_mismatch  (1 if subject IP country != issuer country)
+  4 — time_since_last_issue (hours since last credential from this issuer)
+  5 — credential_lifetime   (valid_until - issued_at, normalized)
+  6 — duplicate_schema       (1 if subject already holds this schema)
 """
 
 from __future__ import annotations
+import math
+from collections import Counter
 import numpy as np
 
 
-def build_training_matrix(rows: list[dict]) -> tuple[np.ndarray, np.ndarray]:
-    """Convert raw DB rows into (X, y) suitable for scikit-learn fit().
+def _shannon_entropy(data: bytes) -> float:
+    """Compute Shannon entropy of a byte sequence (biometric template)."""
+    if not data:
+        return 0.0
+    counts = Counter(data)
+    total = len(data)
+    entropy = 0.0
+    for count in counts.values():
+        if count > 0:
+            p = count / total
+            entropy -= p * math.log2(p)
+    return entropy / 8.0  # normalize to [0, 1]
 
-    Each row is expected to have:
-        issuer_rep, schema_velocity, bio_entropy, ip_mismatch, label (0/1).
-    Unknown keys get a default of 0.
+
+def _issuer_reputation(issuer: str) -> float:
+    """Heuristic issuer reputation based on address characteristics."""
+    if not issuer:
+        return 0.0
+    # Well-formed Stellar addresses start with G
+    if issuer.startswith("G") and len(issuer) == 56:
+        return 0.8
+    # EVM addresses start with 0x
+    if issuer.startswith("0x") and len(issuer) == 42:
+        return 0.7
+    return 0.3
+
+
+def build_feature_vector(payload: dict, history: list[dict] | None = None) -> np.ndarray:
     """
-    keys = ("issuer_rep", "schema_velocity", "bio_entropy", "ip_mismatch")
+    Build a 7-element feature vector from the request payload and optional
+    historical data for velocity/lifetime computation.
+
+    Args:
+        payload: The current issuance request with keys:
+            issuer, subject, schema_hash, biometric_commitment, ip_country, valid_until
+        history: Optional list of previous issuances for the same subject/issuer
+    """
+    issuer = str(payload.get("issuer") or "")
+    subject = str(payload.get("subject") or "")
+    schema_hash = str(payload.get("schema_hash") or "")
+    bio_commit = payload.get("biometric_commitment")
+    ip_country = str(payload.get("ip_country") or "")
+    valid_until = int(payload.get("valid_until") or 0)
+
+    # Feature 0: issuer reputation
+    issuer_rep = _issuer_reputation(issuer)
+
+    # Feature 1: schema velocity (count in last 24h)
+    schema_velocity = 0.0
+    if history:
+        cutoff = (np.datetime64("now") - np.timedelta64(24, "h")).astype(object)
+        schema_velocity = sum(
+            1 for h in history
+            if h.get("schema_hash") == schema_hash
+            and h.get("issued_at", 0) > cutoff
+        )
+
+    # Feature 2: biometric entropy
+    bio_entropy = 0.0
+    if bio_commit:
+        try:
+            raw = bytes.fromhex(str(bio_commit))
+            bio_entropy = _shannon_entropy(raw)
+        except (ValueError, TypeError):
+            bio_entropy = 0.5  # fallback for malformed input
+
+    # Feature 3: IP country mismatch
+    issuer_country = str(payload.get("issuer_country") or "")
+    ip_mismatch = 1.0 if issuer_country and ip_country and issuer_country != ip_country else 0.0
+
+    # Feature 4: time since last issue from this issuer (hours)
+    time_since_last = 0.0
+    if history:
+        issuer_issues = [h for h in history if h.get("issuer") == issuer]
+        if issuer_issues:
+            last_ts = max(h.get("issued_at", 0) for h in issuer_issues)
+            if last_ts > 0:
+                now_ts = np.datetime64("now").astype(np.int64)
+                time_since_last = max(0.0, (now_ts - last_ts) / 3_600_000_000_000)  # ns → hours
+
+    # Feature 5: credential lifetime (normalized)
+    cred_lifetime = 0.0
+    if valid_until > 0:
+        now_ts = int(np.datetime64("now").astype(np.int64) / 1_000_000_000)  # to seconds
+        lifetime_secs = max(0, valid_until - now_ts)
+        cred_lifetime = min(1.0, lifetime_secs / (365 * 24 * 3600))  # normalize to [0,1] years
+
+    # Feature 6: duplicate schema (subject already holds this schema)
+    duplicate = 0.0
+    if history:
+        for h in history:
+            if h.get("subject") == subject and h.get("schema_hash") == schema_hash:
+                duplicate = 1.0
+                break
+
+    return np.array(
+        [issuer_rep, schema_velocity, bio_entropy, ip_mismatch, time_since_last, cred_lifetime, duplicate],
+        dtype=np.float32,
+    )
+
+
+def build_training_matrix(rows: list[dict]) -> tuple[np.ndarray, np.ndarray]:
+    """Convert raw DB rows into (X, y) suitable for scikit-learn fit()."""
+    keys = (
+        "issuer_rep", "schema_velocity", "bio_entropy", "ip_mismatch",
+        "time_since_last", "cred_lifetime", "duplicate_schema",
+    )
     X = np.array([[float(r.get(k, 0.0)) for k in keys] for r in rows], dtype=np.float32)
     y = np.array([int(r.get("label", 0)) for r in rows], dtype=np.int32)
     return X, y
