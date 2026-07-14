@@ -7,6 +7,12 @@ import Logo from "./Logo.js";
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-surface-950 via-surface-900 to-brand-900/20">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:bg-brand-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-lg focus:text-sm"
+      >
+        Skip to main content
+      </a>
       <header className="flex items-center justify-between px-6 py-4 border-b border-surface-700">
         <Logo />
 
@@ -31,7 +37,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <WalletConnect />
       </header>
 
-      <main className="flex-1 px-6 py-8 max-w-7xl w-full mx-auto">{children}</main>
+      <main id="main-content" className="flex-1 px-6 py-8 max-w-7xl w-full mx-auto">{children}</main>
 
       <footer className="px-6 py-4 text-xs text-slate-500 border-t border-surface-700 flex justify-between">
         <span>Built for the Urban &amp; Climate Action Track · Stellar + EVM + ZK</span>
