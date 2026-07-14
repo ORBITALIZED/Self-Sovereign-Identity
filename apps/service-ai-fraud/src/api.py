@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from .models.fraud_detector import FraudDetector, HeuristicDetector
 
-MODEL_PATH = Path(__import__('os').environ.get("MODEL_PATH", "/app/models/fraud_v1.joblib"))
+MODEL_PATH = Path(__import__("os").environ.get("MODEL_PATH", "/app/models/fraud_v1.joblib"))
 
 app = FastAPI(title="SSI Fraud Detector", version="0.1.0")
 
@@ -25,7 +25,7 @@ detector: Any = FraudDetector(MODEL_PATH) if MODEL_PATH.exists() else HeuristicD
 
 class ScoreRequest(BaseModel):
     subject: str
-    issuer:  str | None = None
+    issuer: str | None = None
     schema_hash: str | None = None
     biometric_commitment: str | None = None
     ip_country: str | None = None
@@ -34,6 +34,13 @@ class ScoreRequest(BaseModel):
 class ScoreResponse(BaseModel):
     score: float
     explanation: dict[str, float]
+
+
+class TrainRequest(BaseModel):
+    """Training request: rows of labelled issuance events."""
+    rows: list[dict[str, Any]]
+    model_name: str = "fraud_v1"
+    export: bool = False
 
 
 @app.get("/health")
@@ -48,5 +55,45 @@ def score(body: ScoreRequest):
 
 
 @app.post("/train")
-def train():
-    raise HTTPException(status_code=501, detail="training pipeline is in scope for Phase 2")
+def train(body: TrainRequest):
+    """Train a logistic regression model on labelled issuance data.
+
+    Accepts a list of labelled rows (each with feature columns + a 'label'
+    field of 0 or 1), fits a scikit-learn LogisticRegression model, and
+    optionally exports it to MODEL_PATH for future scoring.
+    """
+    try:
+        from .features.extract import build_training_matrix
+        from sklearn.linear_model import LogisticRegression
+        import joblib
+    except ImportError as e:
+        raise HTTPException(status_code=501, detail=f"training dependencies missing: {e}")
+
+    if not body.rows:
+        raise HTTPException(status_code=400, detail="rows must not be empty")
+
+    X, y = build_training_matrix(body.rows)
+
+    if len(set(y.tolist())) < 2:
+        raise HTTPException(status_code=400, detail="need both positive and negative examples")
+
+    model = LogisticRegression(max_iter=1000, class_weight="balanced")
+    model.fit(X, y)
+
+    if body.export:
+        out = MODEL_PATH.parent / f"{body.model_name}.joblib"
+        joblib.dump(model, out)
+        return {
+            "status": "trained",
+            "samples": len(body.rows),
+            "features": X.shape[1],
+            "accuracy": float(model.score(X, y)),
+            "exported": str(out),
+        }
+
+    return {
+        "status": "trained",
+        "samples": len(body.rows),
+        "features": X.shape[1],
+        "accuracy": float(model.score(X, y)),
+    }
