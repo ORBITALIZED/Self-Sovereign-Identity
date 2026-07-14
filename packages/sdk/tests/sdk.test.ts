@@ -1,7 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { bytesToHex, hexToBytes, base64urlEncode, base64urlDecode } from "../src/utils/index.js";
 import { strKeyToPubKey, pubKeyToStrKey } from "../src/utils/encoding.js";
+import {
+  isStellarPubKey,
+  isStellarStrKey,
+  isEvmAddress,
+  isHash32,
+} from "../src/utils/typeGuards.js";
+import { retry } from "../src/utils/retry.js";
 import { SSIError } from "../src/errors.js";
+import { DEFAULT_TX_TIMEOUT_MS, EVM_CHAIN_ID, WRAPPED_ASSET_PREFIX } from "../src/constants.js";
 
 describe("utils/encoding", () => {
   it("round-trips bytes through hex", () => {
@@ -57,5 +65,94 @@ describe("errors", () => {
   it("errors carry a stable code", () => {
     const e = new SSIError("X", "y");
     expect(e.code).toBe("X");
+  });
+});
+
+describe("constants", () => {
+  it("declares well-known chain ids", () => {
+    expect(EVM_CHAIN_ID.polygonAmoy).toBe(80002);
+    expect(EVM_CHAIN_ID.ethereum).toBe(1);
+  });
+
+  it("uses 'WID' as the wrapped-asset prefix", () => {
+    expect(WRAPPED_ASSET_PREFIX).toBe("WID");
+  });
+
+  it("has a sane default tx timeout", () => {
+    expect(DEFAULT_TX_TIMEOUT_MS).toBeGreaterThan(1_000);
+  });
+});
+
+describe("typeGuards", () => {
+  it("isStellarPubKey accepts 32-byte Uint8Array", () => {
+    expect(isStellarPubKey(new Uint8Array(32))).toBe(true);
+    expect(isStellarPubKey(new Uint8Array(16))).toBe(false);
+    expect(isStellarPubKey("not bytes")).toBe(false);
+  });
+
+  it("isStellarStrKey matches 'G…' shape only", () => {
+    expect(isStellarStrKey("G" + "A".repeat(55))).toBe(true);
+    expect(isStellarStrKey("G" + "A".repeat(10))).toBe(false);
+    expect(isStellarStrKey("0xabc")).toBe(false);
+  });
+
+  it("isEvmAddress accepts canonical 0x… form", () => {
+    expect(isEvmAddress("0x" + "a".repeat(40))).toBe(true);
+    expect(isEvmAddress("0x" + "Z".repeat(40))).toBe(false);
+    expect(isEvmAddress("not hex")).toBe(false);
+  });
+
+  it("isHash32 accepts 0x + 64 hex chars", () => {
+    expect(isHash32("0x" + "0".repeat(64))).toBe(true);
+    expect(isHash32("0x" + "0".repeat(63))).toBe(false);
+  });
+});
+
+describe("retry", () => {
+  it("returns the first successful result", async () => {
+    let calls = 0;
+    const result = await retry(async () => {
+      calls++;
+      return 42;
+    });
+    expect(result).toBe(42);
+    expect(calls).toBe(1);
+  });
+
+  it("retries up to maxAttempts times before throwing", async () => {
+    let calls = 0;
+    await expect(
+      retry(
+        async () => {
+          calls++;
+          throw new Error("boom");
+        },
+        { maxAttempts: 3, initialDelayMs: 1, maxDelayMs: 1 },
+      ),
+    ).rejects.toThrow("boom");
+    expect(calls).toBe(3);
+  });
+
+  it("calls onRetry on every retry attempt", async () => {
+    const fn = vi.fn().mockRejectedValue(new Error("x"));
+    const onRetry = vi.fn();
+    await expect(
+      retry(fn, { maxAttempts: 3, initialDelayMs: 1, maxDelayMs: 1, onRetry }),
+    ).rejects.toThrow("x");
+    expect(onRetry).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws immediately when shouldRetry returns false", async () => {
+    let calls = 0;
+    await expect(
+      retry(
+        async () => {
+          calls++;
+          throw new Error("permanent");
+        },
+        { maxAttempts: 5, initialDelayMs: 1, maxDelayMs: 1, shouldRetry: () => false },
+      ),
+    ).rejects.toThrow("permanent");
+    expect(calls).toBe(1);
   });
 });
