@@ -64,6 +64,10 @@ export async function identityRoutes(app: FastifyInstance) {
     const body = CreateBody.parse(req.body);
     const stellar = getStellar();
     if (!stellar) {
+      app.log.warn(
+        { requestId: req.requestId },
+        "identity route hit without STELLAR_HORIZON_URL",
+      );
       reply.code(503);
       return STELLAR_NOT_CONFIGURED_BODY;
     }
@@ -79,6 +83,10 @@ export async function identityRoutes(app: FastifyInstance) {
   app.get<{ Params: { pubkey: string } }>("/:pubkey", async (req, reply) => {
     const stellar = getStellar();
     if (!stellar) {
+      app.log.warn(
+        { requestId: req.requestId },
+        "identity route hit without STELLAR_HORIZON_URL",
+      );
       reply.code(503);
       return STELLAR_NOT_CONFIGURED_BODY;
     }
