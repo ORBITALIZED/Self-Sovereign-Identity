@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+
 from src.features.extract import (
     _issuer_reputation,
     _shannon_entropy,

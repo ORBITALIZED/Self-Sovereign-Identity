@@ -19,12 +19,13 @@ select = ["E", "F", "I", "B", "UP", "PL", "RUF"]
 [tool.ruff.lint.per-file-ignores]
 # Patterns are matched against file paths relative to the directory
 # where ruff is invoked (the project root = the pyproject.toml directory).
-# Tests: allow magic-value comparisons (standard in test assertions).
-"tests/**" = ["PLR2004"]
-"src/tests/**" = ["PLR2004"]
-# api.py: lazy imports for optional sklearn deps (PLC0415) and
-# HTTP status-code literals (PLR2004) are intentional.
+# Tests: allow magic-value comparisons (PLC) and lazy imports for optional deps.
+"tests/**" = ["PLR2004", "PLC0415"]
+"src/tests/**" = ["PLR2004", "PLC0415"]
+# api.py: lazy imports for optional sklearn deps and HTTP status-code literals.
 "src/api.py" = ["PLC0415", "PLR2004"]
+# fraud_detector.py: lazy import of joblib inside try/except block.
+"src/models/fraud_detector.py" = ["PLC0415"]
 
 [tool.mypy]
 strict = true
