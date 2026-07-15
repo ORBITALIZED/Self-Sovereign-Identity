@@ -111,6 +111,21 @@ contract WrappedBadgeTest is Test {
         assertTrue(bridge.processedLocks(expectedLockHash));
     }
 
+    // ── Additional tests ---------------------------------------------------
+
+    /// Constructor sets badge and selfChainId immutables correctly.
+    function test_constructor_sets_immutables() public {
+        assertEq(address(bridge.badge()), address(sbt));
+        assertEq(bridge.selfChainId(), uint32(block.chainid));
+    }
+
+    /// Constructor grants the relayer both DEFAULT_ADMIN_ROLE and RELAYER_ROLE.
+    function test_relayer_role_granted() public {
+        bytes32 relayerRole = bridge.RELAYER_ROLE();
+        assertTrue(bridge.hasRole(0x00, admin)); // DEFAULT_ADMIN_ROLE
+        assertTrue(bridge.hasRole(relayerRole, admin));
+    }
+
     /// Even if a relayer attempts to lock a token the holder just burned,
     /// the bridge must surface a clean revert (`ownerOf` panics because the
     /// token no longer exists) rather than silently succeeding.

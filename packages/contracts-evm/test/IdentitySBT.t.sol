@@ -127,4 +127,79 @@ contract IdentitySBTTest is Test {
         vm.prank(issuer);
         sbt.issueCredential(holder, SCHEMA_DEGREE, "QmEventCid", uint64(block.timestamp + 30 days));
     }
+
+    // ── Additional tests ---------------------------------------------------
+
+    /// tokenURI must return "ipfs://<cid>" format.
+    function test_tokenURI_format() public {
+        vm.prank(issuer);
+        uint256 tid = sbt.issueCredential(
+            holder,
+            SCHEMA_DEGREE,
+            "QmUriCid",
+            uint64(block.timestamp + 30 days)
+        );
+
+        string memory uri = sbt.tokenURI(tid);
+        assertEq(uri, "ipfs://QmUriCid");
+    }
+
+    /// Issuing a second credential for the same (holder, schema) must revert.
+    function test_already_issued_reverts() public {
+        vm.prank(issuer);
+        sbt.issueCredential(holder, SCHEMA_DEGREE, "QmFirst", uint64(block.timestamp + 30 days));
+
+        vm.prank(issuer);
+        vm.expectRevert(
+            abi.encodeWithSelector(IIdentity.AlreadyIssued.selector, holder, SCHEMA_DEGREE)
+        );
+        sbt.issueCredential(holder, SCHEMA_DEGREE, "QmSecond", uint64(block.timestamp + 30 days));
+    }
+
+    /// Only an issuer (ISSUER_ROLE) can revoke; a stranger must be rejected.
+    function test_revoke_by_stranger_reverts() public {
+        vm.prank(issuer);
+        uint256 tid = sbt.issueCredential(
+            holder,
+            SCHEMA_DEGREE,
+            "QmCID",
+            uint64(block.timestamp + 30 days)
+        );
+
+        vm.prank(stranger);
+        vm.expectRevert();
+        sbt.revokeCredential(tid);
+    }
+
+    /// bridgeBurn must succeed when called by an issuer and actually burn.
+    function test_bridge_burn_success() public {
+        vm.prank(issuer);
+        uint256 tid = sbt.issueCredential(
+            holder,
+            SCHEMA_DEGREE,
+            "QmCID",
+            uint64(block.timestamp + 30 days)
+        );
+
+        vm.prank(issuer);
+        sbt.bridgeBurn(tid);
+
+        // token no longer exists
+        vm.expectRevert();
+        sbt.ownerOf(tid);
+    }
+
+    /// supportsInterface must return true for ERC721, ERC721Metadata, and AccessControl.
+    function test_supports_interface() public {
+        bytes4 erc721Id = 0x80ac58cd;
+        bytes4 erc721MetadataId = 0x5b5e139f;
+        bytes4 accessControlId = 0x7965db0b;
+        bytes4 erc165Id = 0x01ffc9a7;
+
+        assertTrue(sbt.supportsInterface(erc721Id));
+        assertTrue(sbt.supportsInterface(erc721MetadataId));
+        assertTrue(sbt.supportsInterface(accessControlId));
+        assertTrue(sbt.supportsInterface(erc165Id));
+        assertFalse(sbt.supportsInterface(0xffffffff));
+    }
 }
