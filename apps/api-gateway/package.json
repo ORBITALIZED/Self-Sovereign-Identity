@@ -17,7 +17,7 @@
     "@fastify/swagger": "^8.0.0",
     "@fastify/swagger-ui": "^4.0.0",
     "@ssi/sdk": "workspace:*",
-    "fastify": "^4.27.0",
+    "fastify": "^5.10.0",
     "ioredis": "^5.3.2",
     "pg": "^8.11.5",
     "zod": "^3.22.4"
