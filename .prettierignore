@@ -20,3 +20,6 @@ pnpm-lock.yaml
 # IDE
 .idea/
 .vscode/
+
+# Python type-checking cache
+.mypy_cache/
