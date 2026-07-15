@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
-interface BridgeEvent {
+export interface BridgeEvent {
   id: string;
   subject: string;
   sourceChainId: number;
@@ -9,56 +9,46 @@ interface BridgeEvent {
   ts: number;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+const SSE_URL = `${import.meta.env.VITE_API_URL ?? ""}/api/bridge/events/stream`;
 
 export function useBridge() {
   const [events, setEvents] = useState<BridgeEvent[]>([]);
   const [connected, setConnected] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const seenIds = useRef(new Set<string>());
 
   useEffect(() => {
-    let cursor: string | undefined;
-    let active = true;
+    let eventSource: EventSource | null = null;
 
-    const poll = async () => {
-      if (!active) return;
-      try {
-        const url = new URL(`${API_BASE}/api/bridge/wrapped`);
-        url.searchParams.set("limit", "30");
-        if (cursor) url.searchParams.set("cursor", cursor);
+    const connect = () => {
+      eventSource = new EventSource(SSE_URL);
 
-        const res = await fetch(url.toString());
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = (await res.json()) as {
-          events: BridgeEvent[];
-          nextCursor: string | null;
-          error?: string;
-        };
-
-        if (data.error) return;
-
+      eventSource.onopen = () => {
         setConnected(true);
-        if (data.events.length > 0) {
-          setEvents((prev) => {
-            const seen = new Set(prev.map((e) => e.id));
-            const fresh = data.events.filter((e) => !seen.has(e.id));
-            return [...fresh, ...prev].slice(0, 100);
-          });
+      };
+
+      eventSource.onmessage = (msg: MessageEvent<string>) => {
+        try {
+          const ev = JSON.parse(msg.data) as BridgeEvent;
+          if (!seenIds.current.has(ev.id)) {
+            seenIds.current.add(ev.id);
+            setEvents((prev) => [ev, ...prev].slice(0, 100));
+          }
+        } catch {
+          // Malformed JSON — skip silently.
         }
-        cursor = data.nextCursor ?? undefined;
-      } catch {
+      };
+
+      // EventSource auto-reconnects on connection loss with built-in
+      // exponential backoff. We just track the connectivity state.
+      eventSource.onerror = () => {
         setConnected(false);
-      }
+      };
     };
 
-    poll();
-    pollRef.current = setInterval(poll, 5000) as unknown as ReturnType<typeof setInterval>;
+    connect();
 
     return () => {
-      active = false;
-      if (pollRef.current)
-        clearInterval(pollRef.current as unknown as ReturnType<typeof setInterval>);
+      eventSource?.close();
     };
   }, []);
 

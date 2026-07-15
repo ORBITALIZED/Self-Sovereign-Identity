@@ -18,6 +18,31 @@ const QUERY = z.object({
  * Fetch wrapped-badge events from Horizon's contract events API.
  * Returns a shape compatible with the frontend BridgeMonitor component.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument -- Horizon API responses are dynamic JSON; type-safety is impractical */
+function isBadgeWrappedEvent(r: any): boolean {
+  return r.topic?.[0] === "badge_wrapped";
+}
+
+function mapHorizonEvent(r: any): {
+  id: string;
+  subject: string;
+  sourceChainId: number;
+  sourceTxHash: string;
+  assetCode: string;
+  ts: number;
+} {
+  const val = r.value ?? {};
+  return {
+    id: r.paging_token ?? r.id ?? "",
+    subject: val.subject_pubkey ?? "",
+    sourceChainId: Number(val.source_chain_id ?? 0),
+    sourceTxHash: val.source_tx_hash ?? "",
+    assetCode: val.asset_code ?? "",
+    ts: new Date(r.ledger_close_time ?? r.closed_at ?? Date.now()).getTime(),
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+
 async function fetchWrappedEvents(
   horizonUrl: string,
   contractId: string,
@@ -47,29 +72,11 @@ async function fetchWrappedEvents(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const body: any = await res.json();
+  const body: Record<string, any> = (await res.json()) as Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
   const records: unknown[] = body?._embedded?.records ?? [];
 
-  const events = records
-    // Filter to only badge_wrapped topics
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((r: any) => r.topic?.[0] === "badge_wrapped")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((r: any) => {
-      // Horizon contract events have a `value` field with the decoded event data
-      const val = r.value ?? {};
-      return {
-        id: r.paging_token ?? r.id ?? "",
-        subject: val.subject_pubkey ?? "",
-        sourceChainId: Number(val.source_chain_id ?? 0),
-        sourceTxHash: val.source_tx_hash ?? "",
-        assetCode: val.asset_code ?? "",
-        // Horizon contract events expose ledger_close_time in the enclosing
-        // transaction's `closed_at` or the event record's `ledger_close_time`.
-        // Fall back to the current time if neither is available (scaffold).
-        ts: new Date(r.ledger_close_time ?? r.closed_at ?? Date.now()).getTime(),
-      };
-    });
+  const events = records.filter(isBadgeWrappedEvent).map(mapHorizonEvent);
 
   const recordsArr = records as Array<{ paging_token?: string }>;
   const lastRecord = recordsArr.length > 0 ? recordsArr[recordsArr.length - 1] : null;
@@ -80,7 +87,7 @@ async function fetchWrappedEvents(
   };
 }
 
-export async function bridgeRoutes(app: FastifyInstance) {
+export function bridgeRoutes(app: FastifyInstance) {
   const horizonUrl = process.env.STELLAR_HORIZON_URL ?? "";
   const contractId = process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "";
 
@@ -114,5 +121,80 @@ export async function bridgeRoutes(app: FastifyInstance) {
       reply.code(502);
       return { error: (e as Error).message };
     }
+  });
+
+  // ── SSE endpoint: real-time bridge event stream ──────────────────────
+  app.get("/events/stream", (req, reply) => {
+    reply.hijack();
+
+    reply.raw.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+
+    if (!horizonUrl || !contractId) {
+      reply.raw.write(`event: error\ndata: {"message":"Horizon not configured"}\n\n`);
+      reply.raw.end();
+      return;
+    }
+
+    let cursor: string | undefined;
+    let active = true;
+
+    req.raw.on("close", () => {
+      active = false;
+    });
+
+    // Heartbeat every 15s to prevent proxy timeouts.
+    const heartbeat = setInterval(() => {
+      if (!active) {
+        clearInterval(heartbeat);
+        return;
+      }
+      reply.raw.write(": heartbeat\n\n");
+    }, 15_000);
+
+    // Async polling loop — runs in background, disconnected from the
+    // handler's synchronous return path via `reply.hijack()`.
+    const poll = async () => {
+      // 1. Send initial batch (up to 30 events) for a quick first render.
+      try {
+        const initial = await fetchWrappedEvents(horizonUrl, contractId, 30, cursor);
+        for (const ev of initial.events) {
+          if (!active) return;
+          reply.raw.write(`data: ${JSON.stringify(ev)}\n\n`);
+        }
+        cursor = initial.nextCursor ?? undefined;
+      } catch {
+        // Horizon may not be reachable yet — client will see an empty list.
+      }
+
+      // 2. Poll every 3 s for new events.
+      while (active) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        if (!active) break;
+
+        try {
+          const result = await fetchWrappedEvents(horizonUrl, contractId, 10, cursor);
+          for (const ev of result.events) {
+            if (!active) break;
+            reply.raw.write(`data: ${JSON.stringify(ev)}\n\n`);
+          }
+          if (result.nextCursor) cursor = result.nextCursor;
+        } catch {
+          // Transient Horizon error — skip this poll cycle.
+          // (The client's EventSource.onerror fires on connection loss,
+          //  and the initial fetch handles configuration errors.)
+        }
+      }
+
+      // 3. Cleanup.
+      clearInterval(heartbeat);
+      reply.raw.end();
+    };
+
+    void poll();
   });
 }
