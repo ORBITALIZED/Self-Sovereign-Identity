@@ -1,16 +1,21 @@
 //! # WrappedBadge
 //!
 //! Wraps a Soulbound Token issued on a foreign chain (Ethereum, Polygon, …)
-//! as a Stellar-native asset (asset code `WID-<schema_hash_prefix>`, 12 chars
-//! total to fit Stellar's classic asset code limit).
+//! as a Stellar-native asset via the Stellar Asset Contract (SAC).
+//!
+//! Asset code: `WID-<schema_hash_prefix>` (12 chars total — Stellar's
+//! classic asset-code limit).
 //!
 //! Flow:
-//!  1. EVM SBT is minted (or burned-then-emitted) on source chain
-//!  2. Bridge relayer submits `wrap_badge(subject, source_chain_id, source_tx, cid)`
-//!  3. We mint a Stellar asset the holder can spend / present on Stellar-native
-//!     apps, or `unwrap_badge` it back to its origin chain.
+//!  1. EVM SBT is minted (or burned-then-emitted) on source chain.
+//!  2. Bridge relayer submits `wrap_badge(subject, source_chain_id, source_tx, cid)`.
+//!  3. Contract mints 1 unit of the WID-* Stellar asset to the subject via SAC.
+//!  4. The holder can use the token in Stellar-native apps, or `unwrap_badge`
+//!     it back to its origin chain (burns the SAC token).
 
-use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, String};
+use soroban_sdk::{
+    contract, contractimpl, contracttype, token, Address, BytesN, Env, String,
+};
 
 use crate::storage::{emit_event, DataKey};
 
@@ -35,16 +40,32 @@ pub struct WrappedBadge {
 #[contract]
 pub struct WrappedBadgeContract;
 
+/// Amount of the Stellar Asset to mint/burn per badge (1 token with 7 decimals).
+const BADGE_AMOUNT: i128 = 1_0000000;
+
 #[contractimpl]
 impl WrappedBadgeContract {
+    /// Initialise the contract and register a Stellar Asset Contract (SAC)
+    /// for the wrapped badge asset. The WrappedBadge contract itself is the
+    /// SAC admin, so it can autonomously mint (on wrap) and burn (on unwrap)
+    /// without requiring a separate admin signature for each operation.
     pub fn init_wrapped(env: Env, admin: Address) {
         if env.storage().instance().has(&DataKey::Admin) {
             panic!("already initialized");
         }
+        // The SAC admin is the WrappedBadge contract itself, so the contract
+        // can mint/burn autonomously when its own functions are called by
+        // authorised parties (relayer for wrap, holder for unwrap).
+        let contract_addr = Address::from_contract_id(&env.current_contract_id());
+        let sac_id = env.register_stellar_asset_contract(&contract_addr);
         env.storage().instance().set(&DataKey::Admin, &admin);
+        env.storage().instance().set(&DataKey::StellarAsset, &sac_id);
     }
 
     /// Mint a wrapped badge for a subject originating on `source_chain_id`.
+    ///
+    /// Creates a WID-* Stellar asset record AND mints 1 unit of the
+    /// corresponding SAC token to the subject's Stellar address.
     pub fn wrap_badge(
         env: Env,
         relayer: Address,
@@ -73,6 +94,15 @@ impl WrappedBadgeContract {
         );
         env.storage().persistent().set(&key, &badge);
 
+        // Mint 1 unit of the Stellar Asset to the subject's address.
+        let sac_id: soroban_sdk::BytesN<32> = env
+            .storage()
+            .instance()
+            .get(&DataKey::StellarAsset)
+            .expect("SAC not initialised — call init_wrapped first");
+        let subject_addr = Address::from_account_id(&soroban_sdk::AccountId(subject_pubkey.clone()));
+        token::StellarAssetClient::new(&env, &sac_id).mint(&subject_addr, &BADGE_AMOUNT);
+
         emit_event(
             &env,
             ("badge_wrapped",),
@@ -82,6 +112,7 @@ impl WrappedBadgeContract {
     }
 
     /// Burn the wrapped badge when the holder wants to unwrap back to source.
+    /// Destroys 1 unit of the SAC token held by the caller.
     pub fn unwrap_badge(
         env: Env,
         caller: soroban_sdk::Address,
@@ -104,6 +135,14 @@ impl WrappedBadgeContract {
 
         badge.status = WrappedBadgeStatus::Burned;
         env.storage().persistent().set(&key, &badge);
+
+        // Burn 1 unit of the Stellar Asset from the caller.
+        let sac_id: soroban_sdk::BytesN<32> = env
+            .storage()
+            .instance()
+            .get(&DataKey::StellarAsset)
+            .expect("SAC not initialised");
+        token::StellarAssetClient::new(&env, &sac_id).burn(&caller, &BADGE_AMOUNT);
 
         emit_event(
             &env,

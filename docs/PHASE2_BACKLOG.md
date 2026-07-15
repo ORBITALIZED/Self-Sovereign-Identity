@@ -29,17 +29,17 @@
 
 ---
 
-## 🟠 P1 — Wallet Integration & User-Facing Features
+## 🟠 P1 — Wallet Integration & User-Facing Features ✅ **ALL COMPLETE**
 
 > _Corresponding roadmap item: **Phase 2 — Wallet integration via `@stellar/freighter-api` + wagmi**_
 
-| #   | Item                                | Status     | File(s)                                             | Description                                                     |
-| --- | ----------------------------------- | ---------- | --------------------------------------------------- | --------------------------------------------------------------- |
-| 1.1 | **Wallet hydration from Freighter** | ❌ Pending | `apps/frontend/src/hooks/useWallet.ts:10`           | Replace mock addresses with real `@stellar/freighter-api` calls |
-| 1.2 | **Wallet hydration from wagmi**     | ❌ Pending | `apps/frontend/src/hooks/useWallet.ts:10`           | Replace mock addresses with real wagmi `getAccount`             |
-| 1.3 | **Bridge SSE → EventSource**        | ❌ Pending | `apps/frontend/src/hooks/useBridge.ts:17`           | Open real `EventSource('/api/bridge/ws')` instead of empty stub |
-| 1.4 | **BridgeMonitor real Horizon SSE**  | ❌ Pending | `apps/frontend/src/components/BridgeMonitor.tsx:25` | Replace the fake `setInterval` buffer with real SSE consumption |
-| 1.5 | **Friendbot funding in SDK**        | ❌ Pending | `apps/frontend/src/lib/stellar.ts:37`               | Implement `fundTestnet` via Stellar Friendbot HTTP endpoint     |
+| #   | Item                                | Status      | File(s)                                                                  | Description                                                                                               |
+| --- | ----------------------------------- | ----------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| 1.1 | **Wallet hydration from Freighter** | ✅ **Done** | `apps/frontend/src/hooks/useWallet.ts`                                   | Replaced mock addresses with real `@stellar/freighter-api` (`getAddress`, `isConnected`, `requestAccess`) |
+| 1.2 | **Wallet hydration from wagmi**     | ✅ **Done** | `apps/frontend/src/hooks/useWallet.ts`, `apps/frontend/src/lib/wagmi.ts` | Replaced raw `window.ethereum` with wagmi hooks (`useAccount`, `useConnect`, `useDisconnect`)             |
+| 1.3 | **Bridge SSE → EventSource**        | ✅ **Done** | `apps/frontend/src/hooks/useBridge.ts`                                   | Replaced 5s `setInterval` polling with `EventSource` + `/bridge/events/stream` SSE endpoint               |
+| 1.4 | **BridgeMonitor SSE consumption**   | ✅ **Done** | `apps/frontend/src/components/BridgeMonitor.tsx`                         | Bridge monitor consumes real SSE events via `useBridge()` hook                                            |
+| 1.5 | **Friendbot funding in SDK**        | ✅ **Done** | `apps/frontend/src/lib/stellar.ts`                                       | `fundTestnet()` implemented — calls `https://friendbot.stellar.org?addr=…`                                |
 
 ---
 
@@ -47,19 +47,19 @@
 
 > _Corresponding roadmap item: **Phase 2 — Implement Stellar Asset Contract code for wrapped badges (real `WID-…` assets)**_
 
-| #   | Item                                          | Status     | File(s)                                                | Description                                                                               |
-| --- | --------------------------------------------- | ---------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| 2.1 | **Horizon SSE parsing**                       | ❌ Pending | `apps/service-bridge-relayer/src/horizon/client.ts:23` | Parse the SSE stream from Horizon's `/events` endpoint (Node fetch + manual parsing)      |
-| 2.2 | **Stellar Asset Contract for wrapped badges** | ❌ Pending | `packages/contracts-stellar/src/wrapped_badge.rs`      | Implement real `WID-*` Stellar assets via SAC integration (currently just stores records) |
+| #   | Item                                          | Status      | File(s)                                             | Description                                                                                                                                                                |
+| --- | --------------------------------------------- | ----------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.1 | **Horizon SSE parsing**                       | ✅ **Done** | `apps/service-bridge-relayer/src/horizon/client.ts` | SSE stream parsed from Horizon's `/events` endpoint (Node fetch + manual parsing in `HorizonStream` class)                                                                 |
+| 2.2 | **Stellar Asset Contract for wrapped badges** | ✅ **Done** | `packages/contracts-stellar/src/wrapped_badge.rs`   | SAC integration: `init_wrapped` registers SAC via `env.register_stellar_asset_contract()`; `wrap_badge` mints 1 unit; `unwrap_badge` burns 1 unit via `StellarAssetClient` |
 
 ### 🟡 P2 — AI Fraud Detection
 
 > _Corresponding roadmap item: **Phase 2 — Implement AI fraud scorer (logistic regression baseline → gradient boosting)**_
 
-| #   | Item                        | Status     | File(s)                                                    | Description                                                                                             |
-| --- | --------------------------- | ---------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 3.1 | **Real feature extraction** | ❌ Pending | `apps/service-ai-fraud/src/models/fraud_detector.py:35-37` | 3 TODOs remain: replace placeholder features (velocity, entropy, IP mismatch) with real implementations |
-| 3.2 | **Training pipeline**       | ❌ Pending | `apps/service-ai-fraud/src/api.py:52`                      | `/train` endpoint exists but uses placeholder features; needs real data pipeline                        |
+| #   | Item                        | Status      | File(s)                                              | Description                                                                                                                                          |
+| --- | --------------------------- | ----------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3.1 | **Real feature extraction** | ✅ **Done** | `apps/service-ai-fraud/src/models/fraud_detector.py` | 3 placeholder TODOs replaced: `schema_velocity` computed from history, `bio_entropy` via `_shannon_entropy()`, `ip_mismatch` from country comparison |
+| 3.2 | **Training pipeline**       | ❌ Pending  | `apps/service-ai-fraud/src/api.py`                   | `/train` endpoint exists with real features; needs production data pipeline (label collection, model refresh)                                        |
 
 ### 🟡 P2 — CI Hardening
 
@@ -113,30 +113,30 @@
 
 ## 📊 Summary by Package
 
-| Area              | Done  | Pending | Total  |
-| ----------------- | ----- | ------- | ------ |
-| SDK               | 2     | 3       | 5      |
-| API Gateway       | 2     | —       | 2      |
-| Frontend          | —     | 5       | 5      |
-| Bridge Relayer    | 1     | 1       | 2      |
-| AI Fraud          | —     | 2       | 2      |
-| Stellar Contracts | 1     | 1       | 2      |
-| EVM Contracts     | 1     | 2       | 3      |
-| ZK Circuits       | —     | 4       | 4      |
-| CI                | 1     | 2       | 3      |
-| **Total**         | **8** | **20**  | **28** |
+| Area              | Done   | Pending | Total  |
+| ----------------- | ------ | ------- | ------ |
+| SDK               | 2      | 3       | 5      |
+| API Gateway       | 2      | —       | 2      |
+| Frontend          | 5      | —       | 5      |
+| Bridge Relayer    | 2      | —       | 2      |
+| AI Fraud          | 1      | 1       | 2      |
+| Stellar Contracts | 2      | —       | 2      |
+| EVM Contracts     | 1      | 2       | 3      |
+| ZK Circuits       | —      | 4       | 4      |
+| CI                | 1      | 2       | 3      |
+| **Total**         | **16** | **12**  | **28** |
 
 ---
 
 ## 🎯 Recommended Execution Order
 
-| Sprint       | Focus                     | Items                       | Outcome                                               |
-| ------------ | ------------------------- | --------------------------- | ----------------------------------------------------- |
-| **Sprint 1** | P1 — Frontend integration | 1.1 through 1.5             | Frontend works with real wallets and real SSE         |
-| **Sprint 2** | P2 — Production readiness | 2.1, 2.2, 3.1, 3.2, 4.2–4.4 | Real AI features, real bridge, CI improvements        |
-| **Sprint 3** | P3 — Hardening & polish   | 5.1–8.3                     | ZK circuits verified, EVM audited, SDK tests complete |
+| Sprint       | Focus                     | Items            | Outcome                                                       |
+| ------------ | ------------------------- | ---------------- | ------------------------------------------------------------- |
+| **Sprint 1** | P2 — Production readiness | 3.2, 4.2–4.4     | AI training pipeline, SDK tests in CI, Stellar cargo test     |
+| **Sprint 2** | P3 — ZK Circuits          | 5.1–5.4          | Real witness inputs, auto-compile circuits, edge-case tests   |
+| **Sprint 3** | P3 — EVM + SDK polish     | 6.1–6.2, 8.1–8.3 | Slither/Mythril audit, StrKey verification, EVM/ZKP SDK tests |
 
-> **Note:** All 5 P0 items are now complete. The end-to-end flow (SDK → Soroban → API → Bridge Relayer) is fully wired.
+> **Note:** All P0 and P1 items are now complete — 16 of 28 backlog items done (57%). The end-to-end flow (SDK → Soroban → API → Bridge Relayer → Frontend) is fully wired with real wallets, real SSE, and real fraud features.
 
 ---
 
@@ -148,13 +148,13 @@ This backlog was derived from the following sources across the codebase:
 
 - Phase 2 items 1–7
 
-### Remaining Code-level TODOs (3 direct matches)
+### Remaining Code-level TODOs (0 direct matches — all resolved)
 
-| File                                                 | Line | Tag  | Description                                                     |
-| ---------------------------------------------------- | ---- | ---- | --------------------------------------------------------------- |
-| `apps/service-ai-fraud/src/models/fraud_detector.py` | 35   | TODO | `schema_velocity = 0.0` — query MongoDB / Postgres for velocity |
-| `apps/service-ai-fraud/src/models/fraud_detector.py` | 36   | TODO | `bio_entropy = 0.7` — actual Shannon entropy from the template  |
-| `apps/service-ai-fraud/src/models/fraud_detector.py` | 37   | TODO | `ip_mismatch = 0.0` — asn/ipdb lookup                           |
+All 3 TODO markers in `fraud_detector.py` were resolved in P2.1:
+
+- `schema_velocity` now computed from history parameter
+- `bio_entropy` now calls `_shannon_entropy()` from `extract.py`
+- `ip_mismatch` now compares `issuer_country` vs `ip_country`
 
 ### Architecture NOTES (non-TODO but indicating design context)
 

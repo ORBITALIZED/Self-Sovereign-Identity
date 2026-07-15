@@ -23,6 +23,8 @@ pub enum DataKey {
     Recovery(BytesN<32>),
     /// Wrapped badge: `(subject, source_chain_id, source_tx_hash)`.
     WrappedBadge(BytesN<32>, u32, BytesN<32>),
+    /// Stellar Asset Contract ID for the wrapped badge asset.
+    StellarAsset,
     /// Admin address (the deployer) — used for permissioned operations.
     Admin,
     /// Issuer allowlist entry.
