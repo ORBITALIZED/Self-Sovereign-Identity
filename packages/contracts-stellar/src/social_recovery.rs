@@ -63,11 +63,7 @@ impl SocialRecoveryContract {
         env.crypto().ed25519_verify(&guardian, &msg, &signature);
 
         // 3. Track which guardian attested to prevent double-counting.
-        let att_key = RecoveryKey::Attestation(
-            lost_pubkey.clone(),
-            new_pubkey.clone(),
-            nonce,
-        );
+        let att_key = RecoveryKey::Attestation(lost_pubkey.clone(), new_pubkey.clone(), nonce);
 
         // Attestations map: guardian pubkey → has attested (bool).
         // Count map: total number of attestations collected so far.
@@ -107,8 +103,10 @@ impl SocialRecoveryContract {
         }
 
         // Emit the attestation event.
-        env.events()
-            .publish(("recovery_attest",), (guardian, new_pubkey.clone(), attestation_count, threshold));
+        env.events().publish(
+            ("recovery_attest",),
+            (guardian, new_pubkey.clone(), attestation_count, threshold),
+        );
 
         // If threshold is reached, emit recovery_complete and clean up
         // attestation data. The bridge relayer observes this event and
