@@ -13,27 +13,45 @@ Note: tests rely on `pyproject.toml`'s `pythonpath = ["."]` combined with
 `src/__init__.py`, which makes `src` a normal package. Imports go through
 the package path (`from src.api import app`) so the relative imports
 inside `src/api.py` resolve as `src.<module>`.
+
+Test paths: ``EVENT_STORE_PATH`` and ``MODELS_DIR`` default to ``/app/…``
+for production but are redirected to ``tmp_path`` in tests to avoid
+permission errors in CI.  The env vars are set **before** importing
+``src.api`` so that its module-level constants pick up the test values.
 """
 
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+# ---------------------------------------------------------------------------
+# Redirect file-backed storage to a temporary directory so that tests never
+# write to /app/… (which is read-only in most CI environments).
+# ---------------------------------------------------------------------------
+_tmp = tempfile.mkdtemp(prefix="ssi_fraud_test_")
+os.environ.setdefault("MODELS_DIR", f"{_tmp}/models")
+os.environ.setdefault("EVENT_STORE_PATH", f"{_tmp}/events.jsonl")
+
 # Resolvable via pyproject `pythonpath = ["."]`; see header note.
-from src.api import app
-from src.models.fraud_detector import FraudDetector, HeuristicDetector
+# The env-var setup above is required — these constants are evaluated at
+# module load time and must see the redirected test paths.
+from src.api import app  # noqa: E402
+from src.models.fraud_detector import FraudDetector, HeuristicDetector  # noqa: E402
 
 
 @pytest.fixture
 def client() -> TestClient:
     """FastAPI TestClient bound to the real app instance.
 
-    Tests can use this as a smoke-test client; no lifespan events are
-    triggered because the app has none.
+    Note: this fixture does **not** use a context manager, so
+    ``@app.on_event("startup")`` handlers are **not** triggered.
+    Tests that need the event store / model registry should define
+    their own context-managed fixture (see ``test_pipeline.py``).
     """
     return TestClient(app)
 

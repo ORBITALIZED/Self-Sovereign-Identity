@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import math
 from collections import Counter
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 def _shannon_entropy(data: bytes) -> float:
@@ -48,7 +50,10 @@ def _issuer_reputation(issuer: str) -> float:
     return 0.3
 
 
-def build_feature_vector(payload: dict, history: list[dict] | None = None) -> np.ndarray:
+def build_feature_vector(
+    payload: dict[str, Any],
+    history: list[dict[str, Any]] | None = None,
+) -> NDArray[np.float32]:
     """
     Build a 7-element feature vector from the request payload and optional
     historical data for velocity/lifetime computation.
@@ -136,12 +141,53 @@ def build_feature_vector(payload: dict, history: list[dict] | None = None) -> np
     )
 
 
-def build_training_matrix(rows: list[dict]) -> tuple[np.ndarray, np.ndarray]:
+def build_training_matrix(
+    rows: list[dict[str, Any]],
+) -> tuple[NDArray[np.float32], NDArray[np.int32]]:
     """Convert raw DB rows into (X, y) suitable for scikit-learn fit()."""
     keys = (
         "issuer_rep", "schema_velocity", "bio_entropy", "ip_mismatch",
         "time_since_last", "cred_lifetime", "duplicate_schema",
     )
-    X = np.array([[float(r.get(k, 0.0)) for k in keys] for r in rows], dtype=np.float32)
-    y = np.array([int(r.get("label", 0)) for r in rows], dtype=np.int32)
+    X: NDArray[np.float32] = np.array(
+        [[float(r.get(k, 0.0)) for k in keys] for r in rows],
+        dtype=np.float32,
+    )
+    y: NDArray[np.int32] = np.array(
+        [int(r.get("label", 0)) for r in rows],
+        dtype=np.int32,
+    )
+    return X, y
+
+
+def build_training_matrix_from_events(
+    events: list[dict[str, Any]],
+) -> tuple[NDArray[np.float32], NDArray[np.int32]]:
+    """Build (X, y) from stored labelled events with raw payloads.
+
+    Each event in the list should have:
+      - ``payload``: dict with keys consumed by :func:`build_feature_vector`
+        (issuer, subject, schema_hash, biometric_commitment, ip_country,
+        issuer_country, valid_until)
+      - ``feedback``: int 0 (legitimate) or 1 (fraud)
+
+    The feature vector is computed fresh from each event's payload using
+    :func:`build_feature_vector`, allowing the pipeline to work with the
+    same features used during real-time scoring.
+    """
+    if not events:
+        return np.empty((0, 7), dtype=np.float32), np.empty(0, dtype=np.int32)
+
+    X_rows: list[NDArray[np.float32]] = []
+    y_labels: list[int] = []
+    for ev in events:
+        payload = ev.get("payload", {})
+        if not isinstance(payload, dict):
+            payload = {}
+        vec = build_feature_vector(payload)
+        X_rows.append(vec)
+        y_labels.append(int(ev.get("feedback", 0)))
+
+    X: NDArray[np.float32] = np.stack(X_rows, axis=0)
+    y: NDArray[np.int32] = np.array(y_labels, dtype=np.int32)
     return X, y

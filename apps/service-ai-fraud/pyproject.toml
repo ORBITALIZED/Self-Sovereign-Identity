@@ -30,6 +30,14 @@ select = ["E", "F", "I", "B", "UP", "PL", "RUF"]
 [tool.mypy]
 strict = true
 
+[[tool.mypy.overrides]]
+module = ["tests.*", "src.tests.*"]
+# Tests use pytest fixtures (heuristic, client) without explicit types.
+# Note: import-untyped is handled by the --ignore-missing-imports CLI flag
+# in the pre-commit hook (lint-staged).
+allow_untyped_defs = true
+allow_untyped_decorators = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # `pythonpath = ["."]` makes `src/` a normal Python package so the
