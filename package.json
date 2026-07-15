@@ -34,25 +34,34 @@
     "zk:compile": "bash packages/zk-circuits/scripts/compile.sh"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/node": "^20.11.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "lint-staged": "^17.0.8",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.4.0",
     "rimraf": "^5.0.5",
     "simple-git-hooks": "^2.13.1",
     "turbo": "^1.13.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^8.64.0"
   },
   "packageManager": "pnpm@8.15.4",
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,md,sol}": [
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,sol}": [
       "prettier --write"
     ],
     "*.py": [
-      "ruff check --fix --config apps/service-ai-fraud/pyproject.toml --output-format concise"
+      "ruff check --fix --config apps/service-ai-fraud/pyproject.toml --output-format concise",
+      "mypy --config-file apps/service-ai-fraud/pyproject.toml --ignore-missing-imports --show-error-codes"
     ]
   },
   "dependencies": {
