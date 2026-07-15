@@ -44,18 +44,18 @@ class TrainRequest(BaseModel):
 
 
 @app.get("/health")
-def health():
+def health() -> dict[str, Any]:
     return {"status": "ok", "model": type(detector).__name__}
 
 
 @app.post("/score", response_model=ScoreResponse)
-def score(body: ScoreRequest):
+def score(body: ScoreRequest) -> ScoreResponse:
     result = detector.score(body.model_dump())
     return ScoreResponse(score=result["score"], explanation=result["explanation"])
 
 
 @app.post("/train")
-def train(body: TrainRequest):
+def train(body: TrainRequest) -> dict[str, Any]:
     """Train a logistic regression model on labelled issuance data.
 
     Accepts a list of labelled rows (each with feature columns + a 'label'
