@@ -17,10 +17,14 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP", "PL", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-# Patterns are matched against file paths relative to the project root
-# (the cwd when ruff is invoked).
-"apps/service-ai-fraud/tests/**" = ["PLR2004"]
-"apps/service-ai-fraud/src/tests/**" = ["PLR2004"]
+# Patterns are matched against file paths relative to the directory
+# where ruff is invoked (the project root = the pyproject.toml directory).
+# Tests: allow magic-value comparisons (standard in test assertions).
+"tests/**" = ["PLR2004"]
+"src/tests/**" = ["PLR2004"]
+# api.py: lazy imports for optional sklearn deps (PLC0415) and
+# HTTP status-code literals (PLR2004) are intentional.
+"src/api.py" = ["PLC0415", "PLR2004"]
 
 [tool.mypy]
 strict = true

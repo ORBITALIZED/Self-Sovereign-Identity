@@ -116,16 +116,15 @@ impl SocialRecoveryContract {
         // (Soroban contracts have isolated storage — SocialRecovery
         // cannot directly modify IdentityRegistry's state).
         if attestation_count >= threshold {
-            env.events()
-                .publish(
-                    ("recovery_complete",),
-                    (
-                        lost_pubkey.clone(),
-                        new_pubkey.clone(),
-                        attestation_count,
-                        threshold,
-                    ),
-                );
+            env.events().publish(
+                ("recovery_complete",),
+                (
+                    lost_pubkey.clone(),
+                    new_pubkey.clone(),
+                    attestation_count,
+                    threshold,
+                ),
+            );
 
             // Clean up attestation data for this recovery request.
             env.storage().persistent().remove(&att_key);

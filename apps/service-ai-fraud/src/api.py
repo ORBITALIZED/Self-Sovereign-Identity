@@ -75,7 +75,7 @@ def train(body: TrainRequest) -> dict[str, Any]:
 
     X, y = build_training_matrix(body.rows)
 
-    if len(set(y.tolist())) < 2:  # noqa: PLR2004
+    if len(set(y.tolist())) < 2:
         raise HTTPException(status_code=400, detail="need both positive and negative examples")
 
     model = LogisticRegression(max_iter=1000, class_weight="balanced")

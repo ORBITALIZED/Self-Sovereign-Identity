@@ -17,7 +17,9 @@ export default function WalletConnect({ embedded = false }: { embedded?: boolean
         <div className="grid grid-cols-2 gap-3">
           <div
             className="surface-card p-3 text-center space-y-2 cursor-pointer hover:bg-surface-600 transition-colors"
-            onClick={() => connect("freighter")}
+            onClick={() => {
+              void connect("freighter");
+            }}
           >
             <span className="text-brand-500 font-medium">Freighter</span>
             <p className="text-xs text-slate-400">Stellar · Soroban</p>
@@ -25,7 +27,9 @@ export default function WalletConnect({ embedded = false }: { embedded?: boolean
           </div>
           <div
             className="surface-card p-3 text-center space-y-2 cursor-pointer hover:bg-surface-600 transition-colors"
-            onClick={() => connect("metamask")}
+            onClick={() => {
+              void connect("metamask");
+            }}
           >
             <span className="text-yellow-400 font-medium">MetaMask</span>
             <p className="text-xs text-slate-400">EVM · Polygon</p>
