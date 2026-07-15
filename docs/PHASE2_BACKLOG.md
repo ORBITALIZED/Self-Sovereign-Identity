@@ -56,21 +56,21 @@
 
 > _Corresponding roadmap item: **Phase 2 — Implement AI fraud scorer (logistic regression baseline → gradient boosting)**_
 
-| #   | Item                        | Status      | File(s)                                              | Description                                                                                                                                          |
-| --- | --------------------------- | ----------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.1 | **Real feature extraction** | ✅ **Done** | `apps/service-ai-fraud/src/models/fraud_detector.py` | 3 placeholder TODOs replaced: `schema_velocity` computed from history, `bio_entropy` via `_shannon_entropy()`, `ip_mismatch` from country comparison |
-| 3.2 | **Training pipeline**       | ❌ Pending  | `apps/service-ai-fraud/src/api.py`                   | `/train` endpoint exists with real features; needs production data pipeline (label collection, model refresh)                                        |
+| #   | Item                        | Status      | File(s)                                                               | Description                                                                                                                                                                                                                                   |
+| --- | --------------------------- | ----------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3.1 | **Real feature extraction** | ✅ **Done** | `apps/service-ai-fraud/src/models/fraud_detector.py`                  | 3 placeholder TODOs replaced: `schema_velocity` computed from history, `bio_entropy` via `_shannon_entropy()`, `ip_mismatch` from country comparison                                                                                          |
+| 3.2 | **Training pipeline**       | ✅ **Done** | `apps/service-ai-fraud/src/api.py`, `src/store.py`, `src/registry.py` | Full data pipeline: JSONL event store for collecting scored events, `POST /feedback` for labelling, `GET /events` for inspection, `POST /train/from-store` for retraining from accumulated labels, model registry for tracking trained models |
 
 ### 🟡 P2 — CI Hardening
 
 > _Corresponding roadmap item: **Phase 2 — CI: GitHub Actions running Rust + Foundry + Vitest + pytest**_
 
-| #   | Item                                   | Status      | File(s)                          | Description                                                                      |
-| --- | -------------------------------------- | ----------- | -------------------------------- | -------------------------------------------------------------------------------- |
-| 4.1 | **Remove `continue-on-error` from CI** | ✅ **Done** | `.github/workflows/ci.yml`       | `continue-on-error: true` already removed from all CI steps                      |
-| 4.2 | **Add SDK Vitest tests to CI**         | ❌ Pending  | `packages/sdk/tests/sdk.test.ts` | Current tests only cover encoding utils — need tests for Stellar/EVM/ZKP clients |
-| 4.3 | **Add Stellar cargo test to CI**       | ❌ Pending  | `.github/workflows/ci.yml`       | CI only builds and lints Rust — doesn't run `cargo test`                         |
-| 4.4 | **Complete Foundry tests in CI**       | ❌ Pending  | `.github/workflows/ci.yml`       | `forge test -vv` runs but additional Solidity tests would improve coverage       |
+| #   | Item                                   | Status      | File(s)                          | Description                                                                                                                                                     |
+| --- | -------------------------------------- | ----------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 4.1 | **Remove `continue-on-error` from CI** | ✅ **Done** | `.github/workflows/ci.yml`       | `continue-on-error: true` already removed from all CI steps                                                                                                     |
+| 4.2 | **Add SDK Vitest tests to CI**         | ✅ **Done** | `packages/sdk/tests/sdk.test.ts` | 49 tests across all client modules: SSIStellar (submit, identity.create/get, wrappedBadge, credentials), SSIEvm (registry, sbt, bridge), SSIZkp (prove, verify) |
+| 4.3 | **Add Stellar cargo test to CI**       | ❌ Pending  | `.github/workflows/ci.yml`       | CI only builds and lints Rust — doesn't run `cargo test`                                                                                                        |
+| 4.4 | **Complete Foundry tests in CI**       | ❌ Pending  | `.github/workflows/ci.yml`       | `forge test -vv` runs but additional Solidity tests would improve coverage                                                                                      |
 
 ---
 
@@ -115,16 +115,16 @@
 
 | Area              | Done   | Pending | Total  |
 | ----------------- | ------ | ------- | ------ |
-| SDK               | 2      | 3       | 5      |
+| SDK               | 3      | 2       | 5      |
 | API Gateway       | 2      | —       | 2      |
 | Frontend          | 5      | —       | 5      |
 | Bridge Relayer    | 2      | —       | 2      |
-| AI Fraud          | 1      | 1       | 2      |
+| AI Fraud          | 2      | —       | 2      |
 | Stellar Contracts | 2      | —       | 2      |
 | EVM Contracts     | 1      | 2       | 3      |
 | ZK Circuits       | —      | 4       | 4      |
-| CI                | 1      | 2       | 3      |
-| **Total**         | **16** | **12**  | **28** |
+| CI                | 2      | 1       | 3      |
+| **Total**         | **19** | **9**   | **28** |
 
 ---
 
@@ -132,11 +132,11 @@
 
 | Sprint       | Focus                     | Items            | Outcome                                                       |
 | ------------ | ------------------------- | ---------------- | ------------------------------------------------------------- |
-| **Sprint 1** | P2 — Production readiness | 3.2, 4.2–4.4     | AI training pipeline, SDK tests in CI, Stellar cargo test     |
+| **Sprint 1** | P2 — Production readiness | 4.3–4.4          | Stellar cargo test in CI, more Foundry tests                  |
 | **Sprint 2** | P3 — ZK Circuits          | 5.1–5.4          | Real witness inputs, auto-compile circuits, edge-case tests   |
 | **Sprint 3** | P3 — EVM + SDK polish     | 6.1–6.2, 8.1–8.3 | Slither/Mythril audit, StrKey verification, EVM/ZKP SDK tests |
 
-> **Note:** All P0 and P1 items are now complete — 16 of 28 backlog items done (57%). The end-to-end flow (SDK → Soroban → API → Bridge Relayer → Frontend) is fully wired with real wallets, real SSE, and real fraud features.
+> **Note:** All P0, P1, and P2 AI Fraud items are now complete — 19 of 28 backlog items done (68%). The end-to-end flow (SDK → Soroban → API → Bridge Relayer → Frontend) is fully wired with real wallets, real SSE, and real fraud features. The AI fraud service has a complete training pipeline (event store, feedback, model registry, train-from-store). The SDK has 49 Vitest tests covering all three client modules.
 
 ---
 
@@ -167,4 +167,4 @@ All 3 TODO markers in `fraud_detector.py` were resolved in P2.1:
 
 ---
 
-> _Regenerated by the Phase 2 backlog audit on **July 15, 2026**._
+> _Regenerated by the Phase 2 backlog audit on **July 15, 2026**. Last update: **commit 2996a28**._
