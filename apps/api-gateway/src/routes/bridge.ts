@@ -87,7 +87,8 @@ async function fetchWrappedEvents(
   };
 }
 
-export function bridgeRoutes(app: FastifyInstance) {
+// eslint-disable-next-line @typescript-eslint/require-await -- Fastify plugin registration is async-capable
+export async function bridgeRoutes(app: FastifyInstance) {
   const horizonUrl = process.env.STELLAR_HORIZON_URL ?? "";
   const contractId = process.env.STELLAR_WRAPPED_BADGE_CONTRACT ?? "";
 
