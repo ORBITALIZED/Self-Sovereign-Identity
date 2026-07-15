@@ -49,7 +49,7 @@ services:
     container_name: ssi-api-gateway
     depends_on:
       postgres: { condition: service_healthy }
-      redis:    { condition: service_started }
+      redis: { condition: service_started }
       ai-fraud: { condition: service_started }
     environment:
       DATABASE_URL: postgres://ssi:ssi_dev@postgres:5432/ssi
