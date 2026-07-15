@@ -208,7 +208,6 @@ jobs:
       - name: Clippy
         working-directory: packages/contracts-stellar
         run: cargo clippy --all-targets -- -D warnings
-        continue-on-error: true
 
   # =========================================================================
   # Python — AI Fraud Service tests
