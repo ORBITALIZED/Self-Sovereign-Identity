@@ -24,8 +24,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Resolvable via pyproject `pythonpath = ["."]`; see header note.
-from src.api import app  # noqa: E402
-from src.models.fraud_detector import FraudDetector, HeuristicDetector  # noqa: E402
+from src.api import app
+from src.models.fraud_detector import FraudDetector, HeuristicDetector
 
 
 @pytest.fixture

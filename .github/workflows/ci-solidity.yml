@@ -1,0 +1,38 @@
+# =============================================================================
+# Standalone Solidity check — provides a per-job status badge for the README.
+# =============================================================================
+
+name: "CI / Solidity"
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: sol-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  solidity:
+    name: Solidity — Forge Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Forge Build
+        working-directory: packages/contracts-evm
+        run: forge build --sizes
+
+      - name: Forge Test
+        working-directory: packages/contracts-evm
+        run: forge test -vv

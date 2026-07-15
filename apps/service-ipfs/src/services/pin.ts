@@ -45,7 +45,7 @@ export async function pinRoutes(app: FastifyInstance) {
   app.get("/health", async () => ({ status: "ok", uptime: process.uptime() }));
 
   app.get("/pin/status", async () => {
-    const peers = await (helia.libp2p as any).getPeers?.() ?? [];
+    const peers = (await (helia.libp2p as any).getPeers?.()) ?? [];
     return {
       status: "ok",
       peerCount: Array.isArray(peers) ? peers.length : 0,

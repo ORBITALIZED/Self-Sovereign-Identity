@@ -16,7 +16,11 @@ function CopyButton({ text }: { text: string }) {
       }}
       title="Copy to clipboard"
     >
-      {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-emerald-400" />
+      ) : (
+        <Copy className="w-3.5 h-3.5" />
+      )}
     </button>
   );
 }
@@ -88,11 +92,23 @@ export default function IdentityCard({
   );
 }
 
-function Stat({ icon, label, value, action }: { icon: React.ReactNode; label: string; value: string; action?: React.ReactNode }) {
+function Stat({
+  icon,
+  label,
+  value,
+  action,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="surface-card p-3">
       <div className="text-xs text-slate-400 uppercase flex items-center gap-1 justify-between">
-        <span className="flex items-center gap-1">{icon} {label}</span>
+        <span className="flex items-center gap-1">
+          {icon} {label}
+        </span>
         {action}
       </div>
       <div className="font-mono text-slate-200 text-sm mt-1">{value}</div>

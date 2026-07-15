@@ -91,14 +91,8 @@ export default function CreateIdentity() {
           <div className="space-y-4">
             <UploadCloud className="w-10 h-10 text-brand-500" />
             <h2 className="text-xl font-semibold">Encrypted profile</h2>
-            <input
-              ref={fileRef}
-              type="file"
-              className="block text-sm text-slate-300"
-            />
-            <p className="text-xs text-slate-500">
-              Or paste an existing IPFS CID:
-            </p>
+            <input ref={fileRef} type="file" className="block text-sm text-slate-300" />
+            <p className="text-xs text-slate-500">Or paste an existing IPFS CID:</p>
             <input
               className="w-full surface-card px-3 py-2 text-sm"
               placeholder="Qm…"
@@ -116,8 +110,8 @@ export default function CreateIdentity() {
             <Users className="w-10 h-10 text-brand-500" />
             <h2 className="text-xl font-semibold">Trusted guardians</h2>
             <p className="text-sm text-slate-400">
-              Add at least one guardian Stellar address for social recovery.
-              Threshold: {guardians.length > 0 ? Math.ceil(guardians.length / 2) : 0}-of-{guardians.length}.
+              Add at least one guardian Stellar address for social recovery. Threshold:{" "}
+              {guardians.length > 0 ? Math.ceil(guardians.length / 2) : 0}-of-{guardians.length}.
             </p>
             {guardians.map((g, i) => (
               <div key={i} className="flex gap-2 items-center">

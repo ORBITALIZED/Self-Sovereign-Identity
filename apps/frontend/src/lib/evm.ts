@@ -3,7 +3,13 @@
  * Also creates read-only contract instances for the SSI contracts.
  */
 
-import { createPublicClient, http, getContract, type PublicClient, type GetContractReturnType } from "viem";
+import {
+  createPublicClient,
+  http,
+  getContract,
+  type PublicClient,
+  type GetContractReturnType,
+} from "viem";
 import { polygonAmoy, sepolia, hardhat } from "viem/chains";
 
 const CHAIN = Number(import.meta.env.VITE_EVM_CHAIN_ID ?? "80002");
@@ -37,7 +43,9 @@ export function publicClient(): PublicClient {
 }
 
 /** Read-only IdentityRegistry contract instance. */
-export function registryContract(client?: PublicClient): GetContractReturnType<typeof REGISTRY_ABI, PublicClient> {
+export function registryContract(
+  client?: PublicClient,
+): GetContractReturnType<typeof REGISTRY_ABI, PublicClient> {
   return getContract({
     address: REGISTRY_ADDR,
     abi: REGISTRY_ABI,
@@ -46,7 +54,9 @@ export function registryContract(client?: PublicClient): GetContractReturnType<t
 }
 
 /** Read-only IdentitySBT contract instance. */
-export function sbtContract(client?: PublicClient): GetContractReturnType<typeof SBT_ABI, PublicClient> {
+export function sbtContract(
+  client?: PublicClient,
+): GetContractReturnType<typeof SBT_ABI, PublicClient> {
   return getContract({
     address: SBT_ADDR,
     abi: SBT_ABI,
@@ -55,7 +65,9 @@ export function sbtContract(client?: PublicClient): GetContractReturnType<typeof
 }
 
 /** Read-only WrappedBadge bridge contract instance. */
-export function bridgeContract(client?: PublicClient): GetContractReturnType<typeof BRIDGE_ABI, PublicClient> {
+export function bridgeContract(
+  client?: PublicClient,
+): GetContractReturnType<typeof BRIDGE_ABI, PublicClient> {
   return getContract({
     address: BRIDGE_ADDR,
     abi: BRIDGE_ABI,

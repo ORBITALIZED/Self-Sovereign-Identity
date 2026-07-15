@@ -26,6 +26,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,sol}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,sol}\"",
     "typecheck": "turbo run typecheck",
+    "prepare": "simple-git-hooks",
     "contracts:build:stellar": "make -C packages/contracts-stellar build",
     "contracts:build:evm": "forge build --root packages/contracts-evm",
     "contracts:deploy:stellar": "make -C packages/contracts-stellar deploy",
@@ -34,13 +35,26 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "lint-staged": "^17.0.8",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.4.0",
     "rimraf": "^5.0.5",
+    "simple-git-hooks": "^2.13.1",
     "turbo": "^1.13.0",
     "typescript": "^5.4.5"
   },
   "packageManager": "pnpm@8.15.4",
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,sol}": [
+      "prettier --write"
+    ],
+    "*.py": [
+      "ruff check --fix --config apps/service-ai-fraud/pyproject.toml --output-format concise"
+    ]
+  },
   "dependencies": {
     "@changesets/cli": "^2.27.1"
   }

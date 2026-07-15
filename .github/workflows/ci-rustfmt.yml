@@ -1,0 +1,36 @@
+# =============================================================================
+# Standalone Rust format check — provides a per-job status badge for the README.
+# =============================================================================
+
+name: "CI / Rust Format"
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: rfmt-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_VERSION: "1.79.0"
+
+jobs:
+  rfmt:
+    name: Rust — Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust ${{ env.RUST_VERSION }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt
+
+      - name: Check formatting
+        working-directory: packages/contracts-stellar
+        run: cargo fmt --all -- --check

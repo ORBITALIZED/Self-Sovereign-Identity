@@ -15,10 +15,7 @@ export interface ValidateOptions {
 }
 
 /** Create a preHandler that validates the request against a Zod schema. */
-export function validate(
-  schema: ZodSchema,
-  opts: ValidateOptions = {},
-) {
+export function validate(schema: ZodSchema, opts: ValidateOptions = {}) {
   const source = opts.source ?? "body";
 
   return async (req: FastifyRequest, reply: FastifyReply) => {

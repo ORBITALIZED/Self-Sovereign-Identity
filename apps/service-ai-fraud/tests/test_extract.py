@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import numpy as np
-
-from src.features.extract import _shannon_entropy, _issuer_reputation, build_feature_vector, build_training_matrix
+from src.features.extract import (
+    _issuer_reputation,
+    _shannon_entropy,
+    build_feature_vector,
+    build_training_matrix,
+)
 
 
 class TestShannonEntropy:

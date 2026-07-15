@@ -1,0 +1,52 @@
+# =============================================================================
+# Standalone Rust build workflow — provides a per-job status badge for the README.
+# =============================================================================
+
+name: "CI / Rust"
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: rs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_VERSION: "1.79.0"
+
+jobs:
+  rust:
+    name: Rust — Build & Clippy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust ${{ env.RUST_VERSION }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: wasm32-unknown-unknown
+          components: clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/contracts-stellar/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('packages/contracts-stellar/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build
+        working-directory: packages/contracts-stellar
+        run: cargo build --target wasm32-unknown-unknown --release
+
+      - name: Clippy
+        working-directory: packages/contracts-stellar
+        run: cargo clippy --all-targets -- -D warnings

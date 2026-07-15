@@ -2,6 +2,13 @@
 
 > **A blockchain-based identity platform where users own and control their personal identity instead of governments or corporations.**
 
+[![CI](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci.yml/badge.svg)](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci.yml)
+[![Formatting](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-formatting.yml/badge.svg)](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-formatting.yml)
+[![Python Lint](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-python-lint.yml/badge.svg)](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-python-lint.yml)
+[![Rust Format](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-rustfmt.yml/badge.svg)](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-rustfmt.yml)
+[![JS/TS](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-js-ts.yml/badge.svg)](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-js-ts.yml)
+[![Python](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-python.yml/badge.svg)](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-python.yml)
+[![Rust](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-rust.yml/badge.svg)](https://github.com/ORBITALIZED/Self-Sovereign-Identity/actions/workflows/ci-rust.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Stellar](https://img.shields.io/badge/Stellar-Soroban-blue)](https://stellar.org)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.24-yellow)](https://soliditylang.org)
@@ -69,7 +76,7 @@ git clone https://github.com/your-org/Self-Sovereign-Identity.git
 cd Self-Sovereign-Identity
 
 # 1. Install JS workspace deps
-pnpm install            # or: npm install
+pnpm install
 
 # 2. Bootstrap native toolchains (Rust, Foundry, Circom)
 make bootstrap
@@ -83,6 +90,8 @@ make build
 
 Open [http://localhost:5173](http://localhost:5173) for the **frontend dashboard**.
 Open [http://localhost:8080/docs](http://localhost:8080/docs) for the **API gateway** (Swagger).
+
+> 💡 `pnpm install` auto-configures a **pre-commit hook** (via the `prepare` script) that runs Prettier on staged JS/TS/Solidity files and Ruff on Python files. Bypass it when needed: `SKIP_SIMPLE_GIT_HOOKS=1 git commit`
 
 ---
 

@@ -4,7 +4,7 @@
  * the relayer without pulling in a web framework.
  */
 
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
 import type { RelayerStateManager } from "./state.js";
 
 let evmHealthy = false;
@@ -19,7 +19,7 @@ export function markEvmUnhealthy(): void {
 }
 
 /** Register the state manager so the health server can expose dead-letter stats. */
-export function registerStateManager(state: RelayerStateManager): void {
+export function registerStateManager(state: RelayerStateManager | null): void {
   stateRef = state;
 }
 
@@ -41,14 +41,14 @@ function send(res: ServerResponse, code: number, body: unknown): void {
   res.end(json);
 }
 
-export function startHealthServer(): void {
+export function startHealthServer(port?: number): Server {
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
-    if (req.method !== "GET") {
-      send(res, 405, { error: "method_not_allowed" });
-      return;
-    }
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
     if (url.pathname === "/health") {
+      if (req.method !== "GET") {
+        send(res, 405, { error: "method_not_allowed" });
+        return;
+      }
       const cfg = readRelayerConfig();
       const relayerReady = Object.values(cfg).every(Boolean);
       const ok = relayerReady && evmHealthy;
@@ -64,6 +64,10 @@ export function startHealthServer(): void {
       return;
     }
     if (url.pathname === "/dead-letters") {
+      if (req.method !== "GET") {
+        send(res, 405, { error: "method_not_allowed" });
+        return;
+      }
       if (!stateRef) {
         send(res, 503, { error: "state_not_initialized" });
         return;
@@ -74,7 +78,11 @@ export function startHealthServer(): void {
       });
       return;
     }
-    if (url.pathname === "/dead-letters/retry" && req.method === "POST") {
+    if (url.pathname === "/dead-letters/retry") {
+      if (req.method !== "POST") {
+        send(res, 405, { error: "method_not_allowed" });
+        return;
+      }
       if (!stateRef) {
         send(res, 503, { error: "state_not_initialized" });
         return;
@@ -93,8 +101,9 @@ export function startHealthServer(): void {
     }
     send(res, 404, { error: "not_found" });
   });
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(port ?? PORT, "0.0.0.0", () => {
     // eslint-disable-next-line no-console
-    console.log(`[relayer] /health listening on :${PORT}`);
+    console.log(`[relayer] /health listening on :${port ?? PORT}`);
   });
+  return server;
 }

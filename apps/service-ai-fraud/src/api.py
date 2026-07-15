@@ -63,18 +63,19 @@ def train(body: TrainRequest):
     optionally exports it to MODEL_PATH for future scoring.
     """
     try:
-        from .features.extract import build_training_matrix
-        from sklearn.linear_model import LogisticRegression
         import joblib
+        from sklearn.linear_model import LogisticRegression
+
+        from .features.extract import build_training_matrix
     except ImportError as e:
-        raise HTTPException(status_code=501, detail=f"training dependencies missing: {e}")
+        raise HTTPException(status_code=501, detail=f"training dependencies missing: {e}") from e
 
     if not body.rows:
         raise HTTPException(status_code=400, detail="rows must not be empty")
 
     X, y = build_training_matrix(body.rows)
 
-    if len(set(y.tolist())) < 2:
+    if len(set(y.tolist())) < 2:  # noqa: PLR2004
         raise HTTPException(status_code=400, detail="need both positive and negative examples")
 
     model = LogisticRegression(max_iter=1000, class_weight="balanced")

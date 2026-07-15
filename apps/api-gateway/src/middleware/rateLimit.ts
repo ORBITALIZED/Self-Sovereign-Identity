@@ -26,10 +26,7 @@ setInterval(() => {
   }
 }, 300_000).unref();
 
-export async function rateLimit(
-  req: FastifyRequest,
-  reply: FastifyReply,
-): Promise<void> {
+export async function rateLimit(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
   const now = Date.now();
   let entry = windows.get(ip);

@@ -22,11 +22,84 @@ env:
 
 jobs:
   # =========================================================================
+  # Prettier — Format check across the whole repo (gate — runs first)
+  # =========================================================================
+  formatting:
+    name: Formatting — Prettier Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        # version auto-detected from package.json packageManager field
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      # Pre-commit hook verification is intentionally not run here because
+      # lint-staged is designed for local development (pre-commit) and can
+      # produce false failures in CI when comparing against origin/main.
+      # Local formatting is enforced by the `pnpm format:check` step above.
+
+  # =========================================================================
+  # Python lint — Ruff check (gate — skips Python tests if lint fails)
+  # =========================================================================
+  python-lint:
+    name: Python — Ruff Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Check lint
+        working-directory: apps/service-ai-fraud
+        run: python -m ruff check src/ tests/
+
+  # =========================================================================
+  # Rust fmt — Format check (gate — skips Rust build/clippy if fmt fails)
+  # =========================================================================
+  rfmt:
+    name: Rust — Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust ${{ env.RUST_VERSION }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt
+
+      - name: Check formatting
+        working-directory: packages/contracts-stellar
+        run: cargo fmt --all -- --check
+
+  # =========================================================================
   # JS/TS — SDK + API Gateway + Frontend + Bridge Relayer + IPFS Service
   # =========================================================================
   js-ts:
     name: JS/TS — Lint & Test
     runs-on: ubuntu-latest
+    needs: [formatting]
 
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +150,7 @@ jobs:
   solidity:
     name: Solidity — Forge Build & Test
     runs-on: ubuntu-latest
+    needs: [formatting]
 
     steps:
       - uses: actions/checkout@v4
@@ -103,6 +177,7 @@ jobs:
   rust:
     name: Rust — Clippy & Check
     runs-on: ubuntu-latest
+    needs: [formatting, rfmt]
 
     steps:
       - uses: actions/checkout@v4
@@ -112,7 +187,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
           targets: wasm32-unknown-unknown
-          components: clippy, rustfmt
+          components: clippy
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -128,17 +203,10 @@ jobs:
       - name: Build
         working-directory: packages/contracts-stellar
         run: cargo build --target wasm32-unknown-unknown --release
-        continue-on-error: true
 
       - name: Clippy
         working-directory: packages/contracts-stellar
         run: cargo clippy --all-targets -- -D warnings
-        continue-on-error: true
-
-      - name: Check formatting
-        working-directory: packages/contracts-stellar
-        run: cargo fmt --all -- --check
-        continue-on-error: true
 
   # =========================================================================
   # Python — AI Fraud Service tests
@@ -146,6 +214,7 @@ jobs:
   python:
     name: Python — AI Fraud Service
     runs-on: ubuntu-latest
+    needs: [formatting, python-lint]
 
     steps:
       - uses: actions/checkout@v4
@@ -165,32 +234,3 @@ jobs:
       - name: Run tests
         working-directory: apps/service-ai-fraud
         run: python -m pytest tests/ src/tests/ -v --tb=short
-
-      - name: Run ruff lint
-        working-directory: apps/service-ai-fraud
-        run: python -m ruff check src/ tests/
-
-  # =========================================================================
-  # Prettier — Format check across the whole repo
-  # =========================================================================
-  formatting:
-    name: Formatting — Prettier Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        # version auto-detected from package.json packageManager field
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Check formatting
-        run: pnpm format:check

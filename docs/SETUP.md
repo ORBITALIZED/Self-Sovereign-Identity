@@ -78,7 +78,37 @@ pnpm --filter @ssi/frontend dev
 
 ---
 
-## 3. Local dev stack (docker-compose)
+## 3. Branch protection (repo admins only)
+
+Require the full CI suite to pass before merging to `main`. This enforces the same
+checks that run on every push/PR at the repo level, preventing accidental merges of
+broken code.
+
+```bash
+# Requires: GitHub CLI (gh) installed and authenticated with admin access
+./scripts/setup-branch-protection.sh
+```
+
+The script configures the following **required status checks** on `main`:
+
+| Check                         | Workflow                        |
+| ----------------------------- | ------------------------------- |
+| Formatting — Prettier Check   | `ci.yml` / `ci-formatting.yml`  |
+| Python — Ruff Lint            | `ci.yml` / `ci-python-lint.yml` |
+| Rust — Format Check           | `ci.yml` / `ci-rustfmt.yml`     |
+| JS/TS — Lint & Test           | `ci.yml` / `ci-js-ts.yml`       |
+| Solidity — Forge Build & Test | `ci.yml`                        |
+| Python — AI Fraud Service     | `ci.yml` / `ci-python.yml`      |
+| Rust — Clippy & Check         | `ci.yml` / `ci-rust.yml`        |
+
+Branches must also be **up-to-date** with `main` before merging (`strict: true`).
+
+To remove or modify these rules later, use the GitHub repo settings UI:
+`Settings > Branches > Branch protection rules`.
+
+---
+
+## 4. Local dev stack (docker-compose)
 
 ```bash
 make dev
@@ -93,7 +123,7 @@ This launches Postgres, Redis, IPFS (Kubo), API gateway, bridge relayer, IPFS se
 
 ---
 
-## 4. Deploy to Stellar Testnet
+## 5. Deploy to Stellar Testnet
 
 ```bash
 # Configure in .env:
@@ -112,7 +142,7 @@ STELLAR_WRAPPED_BADGE_CONTRACT=CDEF…
 
 ---
 
-## 5. Deploy to EVM testnet (Polygon Amoy)
+## 6. Deploy to EVM testnet (Polygon Amoy)
 
 ```bash
 # Configure in .env:
@@ -125,7 +155,7 @@ forge script script/Deploy.s.sol --rpc-url $EVM_RPC_URL --broadcast
 
 ---
 
-## 6. Generating ZK keys (Powers of Tau)
+## 7. Generating ZK keys (Powers of Tau)
 
 For real production use, run a Phase-2 trusted setup **once**:
 
@@ -143,7 +173,7 @@ snarkjs zkey export verificationkey keys/credential_final.zkey keys/verification
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom                                                        | Fix                                                                  |
 | -------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -166,7 +196,7 @@ snarkjs zkey export verificationkey keys/credential_final.zkey keys/verification
 
 ---
 
-## 8. Useful commands cheat-sheet
+## 9. Useful commands cheat-sheet
 
 ```bash
 # Open a Stellar contract's storage

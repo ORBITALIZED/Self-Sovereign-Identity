@@ -1,0 +1,35 @@
+# =============================================================================
+# Standalone Python lint check — provides a per-job status badge for the README.
+# =============================================================================
+
+name: "CI / Python Lint"
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pylint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-lint:
+    name: Python — Ruff Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Check lint
+        working-directory: apps/service-ai-fraud
+        run: python -m ruff check src/ tests/

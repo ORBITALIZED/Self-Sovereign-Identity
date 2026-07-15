@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+
 import numpy as np
 
 
@@ -24,12 +25,11 @@ def _build_feature_vector(payload: dict) -> np.ndarray:
 
     Features (placeholder; real model would use many more):
       0 — issuer reputation  (1.0 == well known, 0 == unknown)
-      1 — schema_velocity    (how many credentials this subject has requested for the schema in last 24h)
-      2 — biometric_entropy  (Shannon entropy of biometric template; 0=identical replays)
-      3 — ip_country_mismatch (1 if subject's country != issuer country)
+      1 — schema_velocity    (credentials issued for this schema in last 24h)
+      2 — biometric_entropy  (Shannon entropy of template; 0=identical replays)
+      3 — ip_country_mismatch (1 if subject country != issuer country)
     """
     issuer = payload.get("issuer") or ""
-    subject = payload.get("subject") or ""
 
     issuer_rep = 1.0 if issuer.startswith("G") else 0.5  # placeholder heuristic
     schema_velocity = 0.0   # TODO: query MongoDB / Postgres for velocity
@@ -48,7 +48,7 @@ class FraudDetector:
         self.path = path
         self.model = None
         try:
-            import joblib  # noqa: WPS433
+            import joblib
             self.model = joblib.load(path)
         except Exception as e:  # pragma: no cover
             print(f"[fraud] WARN — failed to load model at {path}: {e}", flush=True)

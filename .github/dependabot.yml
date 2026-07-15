@@ -1,0 +1,86 @@
+# =============================================================================
+# Dependabot — automated dependency updates across all ecosystems
+# =============================================================================
+
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # npm/pnpm — SDK, API Gateway, Frontend, Bridge Relayer, IPFS Service
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Etc/UTC
+    labels:
+      - dependencies
+      - javascript
+    # Group minor/patch updates together to reduce PR noise.
+    groups:
+      development-deps:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      react-ecosystem:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      stellar:
+        patterns:
+          - "@stellar/*"
+          - "stellar-sdk"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+
+  # ---------------------------------------------------------------------------
+  # Rust — Soroban smart contracts
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: cargo
+    directory: /packages/contracts-stellar
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Etc/UTC
+    labels:
+      - dependencies
+      - rust
+    # Group Soroban SDK updates so they arrive as a single PR and are tested
+    # together (soroban-sdk and its transitive deps must stay in sync).
+    groups:
+      soroban:
+        patterns:
+          - "soroban-sdk"
+          - "soroban-*"
+    open-pull-requests-limit: 3
+
+  # ---------------------------------------------------------------------------
+  # Python — AI Fraud Detection service (pip/requirements.txt)
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: pip
+    directory: /apps/service-ai-fraud
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Etc/UTC
+    labels:
+      - dependencies
+      - python
+    groups:
+      fastapi:
+        patterns:
+          - "fastapi"
+          - "uvicorn"
+          - "pydantic"
+      ml:
+        patterns:
+          - "scikit-learn"
+          - "numpy"
+          - "joblib"
+    open-pull-requests-limit: 3

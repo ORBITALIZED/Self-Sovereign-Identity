@@ -80,18 +80,23 @@ When opening a PR, include:
 
 ```markdown
 ## Summary
+
 <!-- One sentence on what this PR does. -->
 
 ## Motivation
+
 <!-- Why is this change needed? Link issues if applicable. -->
 
 ## Test plan
+
 <!-- How did you verify this change? List commands or describe manual steps. -->
+
 - [ ] CI passes locally (`make ci`)
 - [ ] New tests added for new behaviour
 - [ ] Manual smoke test performed
 
 ## Checklist
+
 - [ ] I have run `make format`
 - [ ] I have added/updated tests
 - [ ] I have updated CHANGELOG.md

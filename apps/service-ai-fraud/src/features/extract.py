@@ -14,8 +14,10 @@ Features extracted (7 total):
 """
 
 from __future__ import annotations
+
 import math
 from collections import Counter
+
 import numpy as np
 
 
@@ -38,10 +40,10 @@ def _issuer_reputation(issuer: str) -> float:
     if not issuer:
         return 0.0
     # Well-formed Stellar addresses start with G
-    if issuer.startswith("G") and len(issuer) == 56:
+    if issuer.startswith("G") and len(issuer) == 56:  # noqa: PLR2004
         return 0.8
     # EVM addresses start with 0x
-    if issuer.startswith("0x") and len(issuer) == 42:
+    if issuer.startswith("0x") and len(issuer) == 42:  # noqa: PLR2004
         return 0.7
     return 0.3
 
@@ -121,7 +123,15 @@ def build_feature_vector(payload: dict, history: list[dict] | None = None) -> np
                 break
 
     return np.array(
-        [issuer_rep, schema_velocity, bio_entropy, ip_mismatch, time_since_last, cred_lifetime, duplicate],
+        [
+            issuer_rep,
+            schema_velocity,
+            bio_entropy,
+            ip_mismatch,
+            time_since_last,
+            cred_lifetime,
+            duplicate,
+        ],
         dtype=np.float32,
     )
 

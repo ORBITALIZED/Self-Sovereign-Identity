@@ -84,10 +84,10 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
 
     // -- Soulbound enforcement ----------------------------------------------
 
-/// @dev Overrides ERC721 `_update` to reject transfers between EOAs.
-///      Follows the checks-effects pattern: ownership is checked before
-///      delegating to OZ's `super._update` which handles mint/burn.
-/// @return The previous owner address (delegated to super).
+    /// @dev Overrides ERC721 `_update` to reject transfers between EOAs.
+    ///      Follows the checks-effects pattern: ownership is checked before
+    ///      delegating to OZ's `super._update` which handles mint/burn.
+    /// @return The previous owner address (delegated to super).
     function _update(
         address to,
         uint256 tokenId,

@@ -29,7 +29,7 @@ export default function Dashboard() {
       try {
         const res = await fetch(`/api/credentials/${address}/count`);
         if (!res.ok) return [];
-        const body = await res.json() as { count: number };
+        const body = (await res.json()) as { count: number };
         return Array.from({ length: body.count }, (_, i) => ({
           id: `${i}`,
           title: `Credential #${i + 1}`,
@@ -87,11 +87,12 @@ export default function Dashboard() {
           )}
           <ul className="text-sm text-slate-300 space-y-2">
             {credentials.data?.map((c) => (
-              <li key={c.id} className="surface-card px-3 py-2 flex items-center justify-between gap-3">
+              <li
+                key={c.id}
+                className="surface-card px-3 py-2 flex items-center justify-between gap-3"
+              >
                 <span className="flex items-center gap-2">
-                  <span className="text-brand-500">
-                    {ICON_MAP[c.kind] ?? ICON_MAP.default}
-                  </span>
+                  <span className="text-brand-500">{ICON_MAP[c.kind] ?? ICON_MAP.default}</span>
                   {c.title}
                 </span>
                 <span className="text-xs text-emerald-400">{c.status}</span>
