@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Script, console2 } from "forge-std/Script.sol";
-import { IdentityRegistry } from "../src/IdentityRegistry.sol";
-import { IdentitySBT } from "../src/IdentitySBT.sol";
-import { WrappedBadge } from "../src/WrappedBadge.sol";
+import {Script, console2} from "forge-std/Script.sol";
+import {IdentityRegistry} from "../src/IdentityRegistry.sol";
+import {IdentitySBT} from "../src/IdentitySBT.sol";
+import {WrappedBadge} from "../src/WrappedBadge.sol";
 
 /// @title Deploy — one-shot deployment of the full EVM surface.
 contract Deploy is Script {

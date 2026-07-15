@@ -8,6 +8,9 @@ out/
 build/
 target/
 
+# Solidity is formatted by forge fmt (native formatter)
+*.sol
+
 # Forge dependencies (OpenZeppelin etc.)
 packages/contracts-evm/lib/
 

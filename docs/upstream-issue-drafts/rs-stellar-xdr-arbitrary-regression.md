@@ -1,4 +1,9 @@
-# `#[derive(Arbitrary)]` impls on generated XDR types call `try_size_hint`, undefined on `arbitrary` < 1.4
+# `#[derive(Arbitrary)]` impls on generated XDR types call `try_size_hint` — RESOLVED
+
+> **Status: RESOLVED** — upstream regression is side-stepped by upgrading to
+> `soroban-sdk >= 21.7.7`. The project now pins `=21.7.7` and `cargo build`
+>
+> - `cargo clippy` pass cleanly without `continue-on-error` workarounds.
 
 ## Summary
 
@@ -9,23 +14,48 @@ downstream crate resolves a version of the `arbitrary` crate that does **not**
 expose `try_size_hint`, the generated impls stop compiling and the crate
 cannot run `cargo test`.
 
-This blocks `cargo test` for any project pinned (directly or via
-`soroban-sdk`) to a `stellar-xdr` 20.0.x. Newer `soroban-sdk` releases
-sidestep the breakage by pinning `arbitrary = "~1.3.0"` in their
-`Cargo.toml.orig` — so the maintainers are already aware of the interaction,
-but downstream consumers locked to the SDK 20 line (e.g. anything that pins
-`soroban-sdk = "=20.0.0"`) cannot pick up that workaround without an
-`[patch.crates-io]` shim.
-
 ## Affected versions
 
 - `rs-stellar-xdr` 20.0.x (the regression appears to have shipped in this
   range; we are blocked on the exact same `=20.0.0` baseline as `soroban-sdk`
   =20.0.0).
-- Reproduced against `soroban-sdk = "=20.0.0"`, `stellar-xdr = "=20.0.0"`,
+- Reproduced against `soroban-sdk = \"=20.0.0\"`, `stellar-xdr = \"=20.0.0\"`,
   arbitrary resolves to `<1.4` via Cargo's default-feature resolution.
+- **Not reproducible with `soroban-sdk = \"=21.7.7\"`** — the SDK 21.x line
+  drops the `arbitrary = "~1.3.0"` pin that was responsible for the breakage.
 
-## Reproduction (minimum viable)
+## Resolution in this project
+
+The fix was to upgrade from `soroban-sdk = "=20.0.0"` to `=21.7.7`:
+
+```diff
+- soroban-sdk = "=20.0.0"
++ soroban-sdk = "=21.7.7"
+```
+
+This required a matching rustc bump in `rust-toolchain.toml`:
+
+```diff
+- channel = "1.85.0"
++ channel = "1.88.0"
+```
+
+### What the upgrade fixes
+
+- `cargo build --target wasm32-unknown-unknown --release` — compiles cleanly
+- `cargo clippy --target wasm32-unknown-unknown -- -D warnings` — passes
+- CI no longer needs `continue-on-error: true` on the Rust build/clippy steps
+
+### What the upgrade does NOT fix
+
+`soroban-sdk 21.7.7` has a **separate** upstream issue in `soroban-env-host`:
+a `rand_core` version conflict (`rand_chacha v0.3.1` using `rand_core v0.6`
+vs `ed25519-dalek v3.x` using `rand_core v0.10`) that blocks
+`cargo test --features testutils`. This is a different regression that would
+require migrating to `soroban-sdk 27.x` (with `wasm32v1-none` target) to
+resolve.
+
+## Original reproduction (retained for reference)
 
 ```toml
 # Cargo.toml
@@ -106,21 +136,6 @@ references it errors with E0599.
    on `arbitrary <1.4` link against the older `Arbitrary` trait without
    having to add their own `[patch.crates-io]` block.
 
-## Workaround (downstream)
-
-A workspace-level patch works around the breakage until the upstream
-emits a fix:
-
-```toml
-# Cargo.toml (workspace root)
-[patch.crates-io]
-arbitrary = { version = "=1.3.2" }
-```
-
-Caveat: this only works if downstream does NOT depend on a Stellar XDR
-sub-feature that requires `arbitrary >= 1.4`. Today nothing in 20.0.x does,
-so the patch is safe.
-
 ## Impact
 
 - Direct: every project pinned to `soroban-sdk = "=20.0.0"` loses `cargo
@@ -130,17 +145,3 @@ test` on the Soroban contracts (this affects the SSI / Self-Sovereign
 - Reported count of blocked `cargo test` builds on the public scaffold
   side: ~1,836 compile errors emitted per identical clean build, blocking
   every test target and every clippy/all-targets lint step.
-
-## Environment
-
-- `cargo` 1.85.0 (rust-toolchain.toml pinned in downstream repo)
-- `soroban-sdk = "=20.0.0"`
-- `stellar-xdr = "=20.0.0"` (resolved transitively by `soroban-sdk`)
-- `arbitrary = "1.3.2"` (resolved by Cargo's default-feature selection)
-
-## Cross-references
-
-- Downstream consumer ticket (project-side): see also the parallel issue
-  filed on `stellar/rs-soroban-sdk` requesting an upstream SDK 20.x patch
-  release that bundles either of the fixes above, so downstream consumers
-  can drop the workspace `[patch.crates-io]` shim.

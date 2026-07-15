@@ -9,33 +9,27 @@ publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-# =========================================================================
-# NOTE: `cargo test --features testutils` is currently broken due to an
-# upstream regression in stellar-xdr (as of soroban-sdk 20.0.0). The
-# `#[derive(Arbitrary)]` macro in stellar-xdr generates calls to
-# `try_size_hint` which is not available in the resolved `arbitrary` crate.
+# NOTE: `cargo test --features testutils` cannot compile due to an upstream
+# dependency conflict in `soroban-env-host` (present in 21.x, 22.x, 23.x):
+#   - `rand_chacha v0.3.1` provides `CryptoRng` from `rand_core v0.6`
+#   - `ed25519-dalek v3.x`  provides `CryptoRng` from `rand_core v0.10`
+#   - The trait bound `ChaCha20Rng: CryptoRng` fails because the two traits
+#     come from different `rand_core` versions.
 #
-# Affected crate: stellar-xdr 20.0.x (transitive dep)
-# Symptom: error[E0599]: no method named `try_size_hint` found for struct
-#
-# When the upstream fix ships (stellar-xdr >= 20.1.0), flip `test = false`
-# back to `true` and re-enable the test module in src/test.rs.
-# See scripts/check-stellar-xdr-fix.sh for automated detection.
-# =========================================================================
+# The `test` unit tests in `src/test.rs` call `mock_all_auths()` which
+# requires the `testutils` feature, so `cargo test` without the feature
+# would also fail. To fix this permanently, migrate to soroban-sdk 27.x
+# (requires `wasm32v1-none` target, rustc 1.84+, and API changes).
 test = false
 
 [features]
 testutils = ["soroban-sdk/testutils"]
 
 [dependencies]
-soroban-sdk = "=20.0.0"
-# Pin arbitrary to ~1.3.0 to avoid regression in soroban-sdk v20 with
-# stellar-xdr's #[derive(Arbitrary)] macro calling try_size_hint
-# which was added in arbitrary v1.4.0.
-arbitrary = "~1.3.0"
+soroban-sdk = "=21.7.7"
 
 [dev-dependencies]
-soroban-sdk = { version = "=20.0.0", features = ["testutils"] }
+soroban-sdk = { version = "=21.7.7", features = ["testutils"] }
 
 [profile.release]
 opt-level = "z"

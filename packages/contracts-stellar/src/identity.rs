@@ -86,7 +86,7 @@ impl IdentityRegistry {
         {
             panic!("identity already exists");
         }
-        if recovery_owners.len() == 0 {
+        if recovery_owners.is_empty() {
             panic!("at least one recovery owner required");
         }
 

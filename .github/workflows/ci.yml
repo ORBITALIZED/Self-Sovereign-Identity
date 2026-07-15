@@ -18,7 +18,7 @@ concurrency:
 
 env:
   NODE_VERSION: "20"
-  RUST_VERSION: "1.79.0"
+  RUST_VERSION: "1.88.0"
 
 jobs:
   # =========================================================================
@@ -132,6 +132,34 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # ── Circom (ZK circuit compiler) ────────────────────────────────────
+      # Install from source via Cargo. The binary is cached so subsequent
+      # runs only pay the build cost once per cache miss.
+      - name: Cache Circom binary
+        id: cache-circom
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/circom
+          key: ${{ runner.os }}-circom-2.1.6
+
+      - name: Install Circom
+        if: steps.cache-circom.outputs.cache-hit != 'true'
+        run: bash scripts/install-circom.sh 2.1.6
+
+      - name: Add circom to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # ── Cache ZK circuit build artifacts ────────────────────────────────
+      # Keyed on the Circom source files and the PTAU file (if downloaded).
+      - name: Cache ZK artifacts
+        id: cache-zk
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/zk-circuits/build
+            packages/zk-circuits/keys
+          key: ${{ runner.os }}-zk-${{ hashFiles('packages/zk-circuits/circuits/**/*.circom', 'packages/zk-circuits/input.json', 'packages/zk-circuits/input-age.json', 'packages/zk-circuits/scripts/compile.sh', 'packages/zk-circuits/scripts/setup.sh', 'packages/zk-circuits/scripts/ci-pretest.sh') }}
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -200,21 +228,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      # Both Build and Clippy use `continue-on-error: true` because the
-      # upstream `stellar-xdr` crate (transitive dep via soroban-sdk =20.0.0)
-      # has a known regression: derived `Arbitrary` impls call `try_size_hint`
-      # which doesn't exist in `arbitrary < 1.4`. This affects ALL targets,
-      # not just `--all-targets`. See:
-      #   docs/upstream-issue-drafts/rs-stellar-xdr-arbitrary-regression.md
       - name: Build
         working-directory: packages/contracts-stellar
         run: cargo build --target wasm32-unknown-unknown --release
-        continue-on-error: true
 
       - name: Clippy
         working-directory: packages/contracts-stellar
         run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
-        continue-on-error: true
 
   # =========================================================================
   # Python — AI Fraud Service tests

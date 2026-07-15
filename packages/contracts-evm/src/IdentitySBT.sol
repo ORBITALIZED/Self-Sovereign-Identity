@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { IIdentity } from "./interfaces/IIdentity.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IIdentity} from "./interfaces/IIdentity.sol";
 
 /// @title IdentitySBT — Soulbound Identity Badge
 /// @notice ERC-721 whose transfers are blocked (only mint/burn by issuer).
@@ -88,11 +88,12 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
     ///      Follows the checks-effects pattern: ownership is checked before
     ///      delegating to OZ's `super._update` which handles mint/burn.
     /// @return The previous owner address (delegated to super).
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal virtual override returns (address) {
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        virtual
+        override
+        returns (address)
+    {
         // allow mint (from == 0) AND burn (to == 0) — block all other transfers
         address from = _ownerOf(tokenId);
         if (from != address(0) && to != address(0)) revert TransferForbidden();
@@ -123,9 +124,12 @@ contract IdentitySBT is ERC721, AccessControl, IIdentity {
 
     /// @dev ERC721 and AccessControl both declare supportsInterface; we must
     ///      provide an explicit override that delegates to both.
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC721, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, AccessControl)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 }

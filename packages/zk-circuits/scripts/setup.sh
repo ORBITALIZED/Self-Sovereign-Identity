@@ -18,15 +18,18 @@ if [[ ! -f "$PTAU" ]]; then
     https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_17.ptau
 fi
 
+# Use pnpm exec to resolve the local snarkjs from the workspace node_modules.
+SNARKJS="pnpm exec snarkjs"
+
 for r1cs in build/*.r1cs; do
   name=$(basename "$r1cs" .r1cs)
   echo "→ Trusted setup for $name"
-  snarkjs groth16 setup "$r1cs" "$PTAU" "keys/${name}_0000.zkey"
-  snarkjs zkey contribute \
+  $SNARKJS groth16 setup "$r1cs" "$PTAU" "keys/${name}_0000.zkey"
+  $SNARKJS zkey contribute \
     "keys/${name}_0000.zkey" \
     "keys/${name}_final.zkey" \
     --name="SSI dev contribution" -v -e="$(openssl rand -hex 32)"
-  snarkjs zkey export verificationkey \
+  $SNARKJS zkey export verificationkey \
     "keys/${name}_final.zkey" \
     "keys/${name}_vkey.json"
 done

@@ -1,5 +1,7 @@
 //! # WrappedBadge
 //!
+//! # WrappedBadge
+//!
 //! Wraps a Soulbound Token issued on a foreign chain (Ethereum, Polygon, …)
 //! as a Stellar-native asset via the Stellar Asset Contract (SAC).
 //!
@@ -8,14 +10,18 @@
 //!
 //! Flow:
 //!  1. EVM SBT is minted (or burned-then-emitted) on source chain.
-//!  2. Bridge relayer submits `wrap_badge(subject, source_chain_id, source_tx, cid)`.
+//!  2. Bridge relayer submits `wrap_badge(relayer, subject_pubkey, source_chain_id,
+//!     source_tx, cid)`.
 //!  3. Contract mints 1 unit of the WID-* Stellar asset to the subject via SAC.
 //!  4. The holder can use the token in Stellar-native apps, or `unwrap_badge`
 //!     it back to its origin chain (burns the SAC token).
+//!
+//! NOTE: soroban-sdk 20.0.0 does not expose `Address::from_account_id()` or
+//! `Address::from_contract_id()`. To mint SAC tokens, the caller must supply
+//! the subject's `Address` alongside the raw `BytesN<32>` pubkey. The pubkey
+//! is stored as a ledger key while the `Address` is forwarded to the SAC.
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, token, Address, BytesN, Env, String,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, token, Address, BytesN, Env, String};
 
 use crate::storage::{emit_event, DataKey};
 
@@ -45,30 +51,43 @@ const BADGE_AMOUNT: i128 = 1_0000000;
 
 #[contractimpl]
 impl WrappedBadgeContract {
-    /// Initialise the contract and register a Stellar Asset Contract (SAC)
-    /// for the wrapped badge asset. The WrappedBadge contract itself is the
-    /// SAC admin, so it can autonomously mint (on wrap) and burn (on unwrap)
-    /// without requiring a separate admin signature for each operation.
-    pub fn init_wrapped(env: Env, admin: Address) {
+    /// Initialise the contract with a pre-deployed Stellar Asset Contract (SAC)
+    /// for the wrapped badge asset.
+    ///
+    /// The SAC must be deployed beforehand (e.g. on Stellar mainnet via the
+    /// Stellar CLI or during contract orchestration). The WrappedBadge contract
+    /// stores the SAC address so it can autonomously mint (on wrap) and clawback
+    /// (on unwrap) without requiring a separate admin signature per operation.
+    ///
+    /// # ⚠️ Precondition — SAC config
+    /// The `sac_address` **must** be a SAC whose admin is already set to this
+    /// contract (i.e. `WrappedBadgeContract`'s own address). If the admin is
+    /// different, the `clawback` call in `unwrap_badge` will fail because only
+    /// the SAC admin may claw back tokens. The SAC must also have the clawback
+    /// flag enabled — standard Stellar Asset Contracts deployed with clawback
+    /// support satisfy this requirement.
+    pub fn init_wrapped(env: Env, admin: Address, sac_address: Address) {
         if env.storage().instance().has(&DataKey::Admin) {
             panic!("already initialized");
         }
-        // The SAC admin is the WrappedBadge contract itself, so the contract
-        // can mint/burn autonomously when its own functions are called by
-        // authorised parties (relayer for wrap, holder for unwrap).
-        let contract_addr = Address::from_contract_id(&env.current_contract_id());
-        let sac_id = env.register_stellar_asset_contract(&contract_addr);
         env.storage().instance().set(&DataKey::Admin, &admin);
-        env.storage().instance().set(&DataKey::StellarAsset, &sac_id);
+        env.storage()
+            .instance()
+            .set(&DataKey::StellarAsset, &sac_address);
     }
 
     /// Mint a wrapped badge for a subject originating on `source_chain_id`.
     ///
+    /// `subject` is the Stellar `Address` that will receive the SAC token.
+    /// `subject_pubkey` is the raw 32-byte public key used as a storage key.
+    ///
     /// Creates a WID-* Stellar asset record AND mints 1 unit of the
     /// corresponding SAC token to the subject's Stellar address.
+    #[allow(clippy::too_many_arguments)]
     pub fn wrap_badge(
         env: Env,
         relayer: Address,
+        subject: Address,
         subject_pubkey: BytesN<32>,
         source_chain_id: u32,
         source_tx_hash: BytesN<32>,
@@ -94,14 +113,13 @@ impl WrappedBadgeContract {
         );
         env.storage().persistent().set(&key, &badge);
 
-        // Mint 1 unit of the Stellar Asset to the subject's address.
-        let sac_id: soroban_sdk::BytesN<32> = env
+        // Mint 1 unit of the Stellar Asset to the subject's Address.
+        let sac_address: Address = env
             .storage()
             .instance()
             .get(&DataKey::StellarAsset)
             .expect("SAC not initialised — call init_wrapped first");
-        let subject_addr = Address::from_account_id(&soroban_sdk::AccountId(subject_pubkey.clone()));
-        token::StellarAssetClient::new(&env, &sac_id).mint(&subject_addr, &BADGE_AMOUNT);
+        token::StellarAssetClient::new(&env, &sac_address).mint(&subject, &BADGE_AMOUNT);
 
         emit_event(
             &env,
@@ -113,9 +131,13 @@ impl WrappedBadgeContract {
 
     /// Burn the wrapped badge when the holder wants to unwrap back to source.
     /// Destroys 1 unit of the SAC token held by the caller.
+    ///
+    /// Uses the SAC admin `clawback` to burn tokens since `StellarAssetClient`
+    /// does not expose a `burn` method — only `clawback` (admin-only) removes
+    /// tokens without requiring the holder's per-call auth on the SAC contract.
     pub fn unwrap_badge(
         env: Env,
-        caller: soroban_sdk::Address,
+        caller: Address,
         subject_pubkey: BytesN<32>,
         source_chain_id: u32,
         source_tx_hash: BytesN<32>,
@@ -136,13 +158,14 @@ impl WrappedBadgeContract {
         badge.status = WrappedBadgeStatus::Burned;
         env.storage().persistent().set(&key, &badge);
 
-        // Burn 1 unit of the Stellar Asset from the caller.
-        let sac_id: soroban_sdk::BytesN<32> = env
+        // Claw back (burn) the SAC token from the caller. The WrappedBadge
+        // contract is the SAC admin so it may call `clawback` unilaterally.
+        let sac_address: Address = env
             .storage()
             .instance()
             .get(&DataKey::StellarAsset)
             .expect("SAC not initialised");
-        token::StellarAssetClient::new(&env, &sac_id).burn(&caller, &BADGE_AMOUNT);
+        token::StellarAssetClient::new(&env, &sac_address).clawback(&caller, &BADGE_AMOUNT);
 
         emit_event(
             &env,

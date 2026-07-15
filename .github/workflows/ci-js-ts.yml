@@ -52,6 +52,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # ── Circom (ZK circuit compiler) ────────────────────────────────────
+      - name: Cache Circom binary
+        id: cache-circom
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/circom
+          key: ${{ runner.os }}-circom-2.1.6
+
+      - name: Install Circom
+        if: steps.cache-circom.outputs.cache-hit != 'true'
+        run: bash scripts/install-circom.sh 2.1.6
+
+      - name: Add circom to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # ── Cache ZK circuit build artifacts ────────────────────────────────
+      - name: Cache ZK artifacts
+        id: cache-zk
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/zk-circuits/build
+            packages/zk-circuits/keys
+          key: ${{ runner.os }}-zk-${{ hashFiles('packages/zk-circuits/circuits/**/*.circom', 'packages/zk-circuits/input.json', 'packages/zk-circuits/input-age.json', 'packages/zk-circuits/scripts/compile.sh', 'packages/zk-circuits/scripts/setup.sh', 'packages/zk-circuits/scripts/ci-pretest.sh') }}
+
       - name: Typecheck
         run: pnpm typecheck
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { IIdentity } from "./interfaces/IIdentity.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IIdentity} from "./interfaces/IIdentity.sol";
 
 /// @title IdentityRegistry — authoritative list of issuers and schemas.
 /// @notice Issuer onboarding & schema catalogue. Independent of the SBT so

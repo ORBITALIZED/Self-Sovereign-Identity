@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Test } from "forge-std/Test.sol";
-import { IdentityRegistry } from "../src/IdentityRegistry.sol";
+import {Test} from "forge-std/Test.sol";
+import {IdentityRegistry} from "../src/IdentityRegistry.sol";
 
 contract IdentityRegistryTest is Test {
     IdentityRegistry registry;
@@ -41,9 +41,7 @@ contract IdentityRegistryTest is Test {
         registry.registerIssuer(issuer, "QmA");
 
         vm.prank(registrar);
-        vm.expectRevert(
-            abi.encodeWithSelector(IdentityRegistry.AlreadyRegistered.selector, issuer)
-        );
+        vm.expectRevert(abi.encodeWithSelector(IdentityRegistry.AlreadyRegistered.selector, issuer));
         registry.registerIssuer(issuer, "QmA");
     }
 
@@ -134,7 +132,7 @@ contract IdentityRegistryTest is Test {
     }
 
     /// getHolderSchemas returns empty array for a holder with no attestations.
-    function test_get_holder_schemas_empty() public {
+    function test_get_holder_schemas_empty() public view {
         bytes32[] memory saw = registry.getHolderSchemas(stranger);
         assertEq(saw.length, 0);
     }

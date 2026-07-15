@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Test } from "forge-std/Test.sol";
-import { IdentitySBT } from "../src/IdentitySBT.sol";
-import { WrappedBadge } from "../src/WrappedBadge.sol";
+import {Test} from "forge-std/Test.sol";
+import {IdentitySBT} from "../src/IdentitySBT.sol";
+import {WrappedBadge} from "../src/WrappedBadge.sol";
 
 contract WrappedBadgeTest is Test {
     IdentitySBT sbt;
@@ -39,12 +39,8 @@ contract WrappedBadgeTest is Test {
 
     function test_lock_emits_event() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA, "QmCID", uint64(block.timestamp + 30 days));
 
         bytes32 stellarHash = keccak256("stellarPubKey");
 
@@ -55,7 +51,8 @@ contract WrappedBadgeTest is Test {
             holder,
             SCHEMA,
             tid,
-            1_700_000_000 /*stellar pubnet chain id*/,
+            1_700_000_000,
+            /*stellar pubnet chain id*/
             stellarHash
         );
 
@@ -71,12 +68,8 @@ contract WrappedBadgeTest is Test {
     /// `lockAndNotify`. The custom error `NotHolder()` must be raised.
     function test_lock_reverts_for_non_holder() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA, "QmCID", uint64(block.timestamp + 30 days));
 
         bytes32 stellarHash = keccak256("stellarPubKey");
 
@@ -93,17 +86,12 @@ contract WrappedBadgeTest is Test {
     /// scenario in `test_double_lock_after_burn_reverts`.
     function test_lock_marks_processedLocks() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA, "QmCID", uint64(block.timestamp + 30 days));
 
         bytes32 stellarHash = keccak256("stellarPubKey");
-        bytes32 expectedLockHash = keccak256(
-            abi.encode(holder, tid, uint32(1_700_000_000), stellarHash)
-        );
+        bytes32 expectedLockHash =
+            keccak256(abi.encode(holder, tid, uint32(1_700_000_000), stellarHash));
 
         vm.prank(holder);
         bridge.lockAndNotify(tid, 1_700_000_000, stellarHash);
@@ -114,13 +102,13 @@ contract WrappedBadgeTest is Test {
     // ── Additional tests ---------------------------------------------------
 
     /// Constructor sets badge and selfChainId immutables correctly.
-    function test_constructor_sets_immutables() public {
+    function test_constructor_sets_immutables() public view {
         assertEq(address(bridge.badge()), address(sbt));
         assertEq(bridge.selfChainId(), uint32(block.chainid));
     }
 
     /// Constructor grants the relayer both DEFAULT_ADMIN_ROLE and RELAYER_ROLE.
-    function test_relayer_role_granted() public {
+    function test_relayer_role_granted() public view {
         bytes32 relayerRole = bridge.RELAYER_ROLE();
         assertTrue(bridge.hasRole(0x00, admin)); // DEFAULT_ADMIN_ROLE
         assertTrue(bridge.hasRole(relayerRole, admin));
@@ -131,12 +119,8 @@ contract WrappedBadgeTest is Test {
     /// token no longer exists) rather than silently succeeding.
     function test_double_lock_after_burn_reverts() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA, "QmCID", uint64(block.timestamp + 30 days));
 
         bytes32 stellarHash = keccak256("stellarPubKey");
 
@@ -159,12 +143,8 @@ contract WrappedBadgeTest is Test {
     /// second lock would succeed silently (double-spend).
     function test_lock_replay_different_chain_reverts() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA, "QmCID", uint64(block.timestamp + 30 days));
 
         bytes32 stellarHash = keccak256("stellarPubKey");
 

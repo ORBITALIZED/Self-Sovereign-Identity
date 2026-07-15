@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { IdentitySBT } from "./IdentitySBT.sol";
-import { IIdentity } from "./interfaces/IIdentity.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IdentitySBT} from "./IdentitySBT.sol";
+import {IIdentity} from "./interfaces/IIdentity.sol";
 
 /// @title WrappedBadge — cross-chain lock & burn hook for the relayer.
 /// @notice When the relayer wants to wrap a badge onto Stellar, the holder
@@ -65,18 +65,15 @@ contract WrappedBadge is AccessControl, IIdentity {
     /// @param  tokenId The SBT that will be burned.
     /// @param  destinationChainId Chain ID of the Soroban network to wrap into.
     /// @param  stellarPubKeyXdrHash Hash of the Stellar pubkey the wrapped badge will be issued to.
-    function lockAndNotify(
-        uint256 tokenId,
-        uint32 destinationChainId,
-        bytes32 stellarPubKeyXdrHash
-    ) external {
+    function lockAndNotify(uint256 tokenId, uint32 destinationChainId, bytes32 stellarPubKeyXdrHash)
+        external
+    {
         address holder = badge.ownerOf(tokenId);
         if (holder != msg.sender) revert NotHolder();
 
-        (bytes32 schemaHash, , , , ) = badge.credentials(tokenId);
-        bytes32 lockHash = keccak256(
-            abi.encode(holder, tokenId, destinationChainId, stellarPubKeyXdrHash)
-        );
+        (bytes32 schemaHash,,,,) = badge.credentials(tokenId);
+        bytes32 lockHash =
+            keccak256(abi.encode(holder, tokenId, destinationChainId, stellarPubKeyXdrHash));
         if (processedLocks[lockHash]) revert ReplayLock();
         processedLocks[lockHash] = true;
 

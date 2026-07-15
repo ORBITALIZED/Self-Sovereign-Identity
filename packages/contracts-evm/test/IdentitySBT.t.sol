@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Test } from "forge-std/Test.sol";
-import { IdentitySBT } from "../src/IdentitySBT.sol";
-import { IdentityRegistry } from "../src/IdentityRegistry.sol";
-import { IIdentity } from "../src/interfaces/IIdentity.sol";
+import {Test} from "forge-std/Test.sol";
+import {IdentitySBT} from "../src/IdentitySBT.sol";
+import {IdentityRegistry} from "../src/IdentityRegistry.sol";
+import {IIdentity} from "../src/interfaces/IIdentity.sol";
 
 contract IdentitySBTTest is Test {
     event CredentialIssued(
@@ -38,24 +38,16 @@ contract IdentitySBTTest is Test {
 
     function test_issue_and_query() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA_DEGREE, "QmCID", uint64(block.timestamp + 30 days));
         assertEq(sbt.ownerOf(tid), holder);
         assertEq(sbt.tokenCid(tid), "QmCID");
     }
 
     function test_transfer_blocked() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA_DEGREE, "QmCID", uint64(block.timestamp + 30 days));
 
         vm.prank(holder);
         vm.expectRevert();
@@ -64,12 +56,8 @@ contract IdentitySBTTest is Test {
 
     function test_revoke() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA_DEGREE, "QmCID", uint64(block.timestamp + 30 days));
         vm.prank(issuer);
         sbt.revokeCredential(tid);
         vm.expectRevert();
@@ -101,12 +89,8 @@ contract IdentitySBTTest is Test {
     /// Bridge burn must revert for non-issuer callers.
     function test_bridge_burn_reverts_for_stranger() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA_DEGREE, "QmCID", uint64(block.timestamp + 30 days));
 
         vm.prank(stranger);
         vm.expectRevert();
@@ -134,10 +118,7 @@ contract IdentitySBTTest is Test {
     function test_tokenURI_format() public {
         vm.prank(issuer);
         uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmUriCid",
-            uint64(block.timestamp + 30 days)
+            holder, SCHEMA_DEGREE, "QmUriCid", uint64(block.timestamp + 30 days)
         );
 
         string memory uri = sbt.tokenURI(tid);
@@ -159,12 +140,8 @@ contract IdentitySBTTest is Test {
     /// Only an issuer (ISSUER_ROLE) can revoke; a stranger must be rejected.
     function test_revoke_by_stranger_reverts() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA_DEGREE, "QmCID", uint64(block.timestamp + 30 days));
 
         vm.prank(stranger);
         vm.expectRevert();
@@ -174,12 +151,8 @@ contract IdentitySBTTest is Test {
     /// bridgeBurn must succeed when called by an issuer and actually burn.
     function test_bridge_burn_success() public {
         vm.prank(issuer);
-        uint256 tid = sbt.issueCredential(
-            holder,
-            SCHEMA_DEGREE,
-            "QmCID",
-            uint64(block.timestamp + 30 days)
-        );
+        uint256 tid =
+            sbt.issueCredential(holder, SCHEMA_DEGREE, "QmCID", uint64(block.timestamp + 30 days));
 
         vm.prank(issuer);
         sbt.bridgeBurn(tid);
@@ -190,7 +163,7 @@ contract IdentitySBTTest is Test {
     }
 
     /// supportsInterface must return true for ERC721, ERC721Metadata, and AccessControl.
-    function test_supports_interface() public {
+    function test_supports_interface() public view {
         bytes4 erc721Id = 0x80ac58cd;
         bytes4 erc721MetadataId = 0x5b5e139f;
         bytes4 accessControlId = 0x7965db0b;
