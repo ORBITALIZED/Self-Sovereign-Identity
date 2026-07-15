@@ -200,23 +200,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      # Build step uses continue-on-error because the upstream stellar-xdr
-      # crate (transitive dep via soroban-sdk =20.0.0) has a known regression:
-      # derived Arbitrary impls call `try_size_hint` which doesn't exist in
-      # `arbitrary < 1.4`. See docs/upstream-issue-drafts/ for details.
+      # Build step: `wasm32` release build. This succeeds because the
+      # regression only affects `--all-targets` mode (test code pulls in
+      # stellar-xdr dev-dependencies with the broken Arbitrary derive).
+      # See docs/upstream-issue-drafts/rs-stellar-xdr-arbitrary-regression.md
       - name: Build
-        id: cargo-build
         working-directory: packages/contracts-stellar
         run: cargo build --target wasm32-unknown-unknown --release
-        continue-on-error: true
 
-      # Clippy only runs if Build succeeded, so it never cascade-fails on
-      # the upstream regression. If the upstream regression is eventually
-      # fixed upstream, Clippy will automatically start checking again.
+      # Clippy: We intentionally avoid `--all-targets` here because the
+      # upstream stellar-xdr regression lives in test/dev code paths.
+      # Checking only the production contract code catches real issues
+      # without being blocked by the upstream bug.
       - name: Clippy
-        if: steps.cargo-build.outcome == 'success'
         working-directory: packages/contracts-stellar
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
 
   # =========================================================================
   # Python — AI Fraud Service tests
