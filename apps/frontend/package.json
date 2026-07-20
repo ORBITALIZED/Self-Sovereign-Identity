@@ -12,7 +12,7 @@
     "clean": "rimraf dist .vite"
   },
   "dependencies": {
-    "@stellar/freighter-api": "^4.1.0",
+    "@stellar/freighter-api": "^6.0.1",
     "@tanstack/react-query": "^5.28.0",
     "@ssi/sdk": "workspace:*",
     "clsx": "^2.1.0",
