@@ -15,7 +15,7 @@
 
 use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, String, Vec};
 
-use crate::storage::{emit_event, touch_identity, DataKey, IDENTITY_TTL};
+use crate::storage::{emit_event, require_pubkey_ownership, touch_identity, DataKey, IDENTITY_TTL};
 
 #[contracttype]
 #[derive(Clone, Debug)]
@@ -55,6 +55,8 @@ impl IdentityRegistry {
     /// * `biometric_commit`  — Poseidon-style hash of biometric template.
     /// * `metadata_cid`      — IPFS CID of the encrypted profile blob.
     /// * `recovery_owners`   — list of guardian public keys (M-of-N).
+    /// * `ownership_signature`— Ed25519 proof that `caller` controls `pubkey`
+    ///   (see [`crate::storage::ownership_message`]); prevents squatting.
     ///
     /// # Returns
     /// `true` once the identity has been written to persistent storage and
@@ -74,10 +76,13 @@ impl IdentityRegistry {
         biometric_commit: BytesN<32>,
         metadata_cid: String,
         recovery_owners: Vec<BytesN<32>>,
+        ownership_signature: BytesN<64>,
     ) -> bool {
-        // Require the invoker to authenticate.  `Address::require_auth` is the
-        // correct Soroban API — `BytesN<32>` does not have this method.
-        caller.require_auth();
+        // Require the invoker to authenticate AND prove they control `pubkey`
+        // via an Ed25519 proof-of-possession signature. `BytesN<32>` has no
+        // `require_auth`; the Address authenticates and the signature binds it
+        // to the raw public key used as the storage key.
+        require_pubkey_ownership(&env, &caller, &pubkey, &ownership_signature);
 
         if env
             .storage()
@@ -123,11 +128,18 @@ impl IdentityRegistry {
     /// * `caller`  — the invoking wallet `Address`; must authorise.
     /// * `pubkey`  — the identity to update (matches `caller`).
     /// * `new_cid` — replacement IPFS CID.
+    /// * `ownership_signature` — proof that `caller` controls `pubkey`.
     ///
     /// # Panics
     /// * If no identity is stored for `pubkey`.
-    pub fn update_metadata(env: Env, caller: Address, pubkey: BytesN<32>, new_cid: String) -> bool {
-        caller.require_auth();
+    pub fn update_metadata(
+        env: Env,
+        caller: Address,
+        pubkey: BytesN<32>,
+        new_cid: String,
+        ownership_signature: BytesN<64>,
+    ) -> bool {
+        require_pubkey_ownership(&env, &caller, &pubkey, &ownership_signature);
         let mut id: Identity = env
             .storage()
             .persistent()
@@ -158,6 +170,7 @@ impl IdentityRegistry {
     /// * `caller`     — the invoking wallet `Address`; must authorise.
     /// * `pubkey`     — the identity to rotate (matches `caller`).
     /// * `new_commit` — replacement 32-byte commitment.
+    /// * `ownership_signature` — proof that `caller` controls `pubkey`.
     ///
     /// # Effects
     /// Also calls [`crate::storage::touch_identity`] so the persistent
@@ -170,8 +183,9 @@ impl IdentityRegistry {
         caller: Address,
         pubkey: BytesN<32>,
         new_commit: BytesN<32>,
+        ownership_signature: BytesN<64>,
     ) -> bool {
-        caller.require_auth();
+        require_pubkey_ownership(&env, &caller, &pubkey, &ownership_signature);
         let mut id: Identity = env
             .storage()
             .persistent()

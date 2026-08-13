@@ -51,9 +51,14 @@ This required a matching rustc bump in `rust-toolchain.toml`:
 `soroban-sdk 21.7.7` has a **separate** upstream issue in `soroban-env-host`:
 a `rand_core` version conflict (`rand_chacha v0.3.1` using `rand_core v0.6`
 vs `ed25519-dalek v3.x` using `rand_core v0.10`) that blocks
-`cargo test --features testutils`. This is a different regression that would
-require migrating to `soroban-sdk 27.x` (with `wasm32v1-none` target) to
-resolve.
+`cargo test --features testutils`.
+
+> **UPDATE — worked around (no SDK 27 migration required).** The committed
+> `packages/contracts-stellar/Cargo.lock` pins `ed25519-dalek` to `2.2.0`
+> (rand_core 0.6) so the host, `rand_chacha`, and `ed25519-dalek` all share a
+> single `rand_core`. `cargo test --features testutils` now compiles and runs
+> (12 tests). If the lockfile is regenerated, re-apply:
+> `cargo update -p ed25519-dalek --precise 2.2.0`.
 
 ## Original reproduction (retained for reference)
 

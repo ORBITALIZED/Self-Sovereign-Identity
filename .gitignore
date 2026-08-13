@@ -34,8 +34,10 @@ packages/contracts-evm/broadcast/
 packages/contracts-evm/lib/
 
 # Soroban (Rust)
+# NOTE: Cargo.lock is intentionally committed so `cargo test --features
+# testutils` resolves a consistent `ed25519-dalek`/`rand_core` graph (see the
+# `[patch]`-style pin note in packages/contracts-stellar/Cargo.toml).
 packages/contracts-stellar/target/
-packages/contracts-stellar/Cargo.lock
 packages/contracts-stellar/.soroban/
 
 # Circom

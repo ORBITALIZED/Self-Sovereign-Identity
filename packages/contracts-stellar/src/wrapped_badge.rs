@@ -23,7 +23,7 @@
 
 use soroban_sdk::{contract, contractimpl, contracttype, token, Address, BytesN, Env, String};
 
-use crate::storage::{emit_event, DataKey};
+use crate::storage::{emit_event, require_admin, DataKey};
 
 #[contracttype]
 #[derive(Clone, Debug)]
@@ -35,6 +35,8 @@ pub enum WrappedBadgeStatus {
 #[contracttype]
 #[derive(Clone, Debug)]
 pub struct WrappedBadge {
+    /// The Stellar address the SAC token was minted to (== the holder).
+    pub subject: Address,
     pub subject_pubkey: BytesN<32>,
     pub source_chain_id: u32,
     pub source_tx_hash: BytesN<32>,
@@ -76,6 +78,21 @@ impl WrappedBadgeContract {
             .set(&DataKey::StellarAsset, &sac_address);
     }
 
+    /// Allow an address to act as a bridge relayer (caller = admin).
+    ///
+    /// # Panics
+    /// * If `caller` is not the deployed admin.
+    pub fn authorize_relayer(env: Env, caller: Address, relayer: Address) {
+        let admin = require_admin(&env);
+        caller.require_auth();
+        if caller != admin {
+            panic!("only admin can authorize relayers");
+        }
+        env.storage()
+            .instance()
+            .set(&DataKey::RelayerAllowlist(relayer), &true);
+    }
+
     /// Mint a wrapped badge for a subject originating on `source_chain_id`.
     ///
     /// `subject` is the Stellar `Address` that will receive the SAC token.
@@ -96,8 +113,32 @@ impl WrappedBadgeContract {
     ) -> bool {
         relayer.require_auth();
 
+        // Only allow-listed relayers may wrap badges. Without this, anyone
+        // could mint wrapped identity badges to themselves, bypassing the
+        // bridge and fraud-detection pipeline entirely.
+        let authorized: bool = env
+            .storage()
+            .instance()
+            .get::<DataKey, bool>(&DataKey::RelayerAllowlist(relayer.clone()))
+            .unwrap_or(false);
+        if !authorized {
+            panic!("relayer is not authorized");
+        }
+
+        let key = DataKey::WrappedBadge(
+            subject_pubkey.clone(),
+            source_chain_id,
+            source_tx_hash.clone(),
+        );
+        // Replay protection: the same (subject, chain, source tx) may only be
+        // wrapped once, otherwise the SAC token would be double-minted.
+        if env.storage().persistent().has(&key) {
+            panic!("badge already wrapped");
+        }
+
         let asset_code = build_asset_code(&env, &schema_hash);
         let badge = WrappedBadge {
+            subject: subject.clone(),
             subject_pubkey: subject_pubkey.clone(),
             source_chain_id,
             source_tx_hash: source_tx_hash.clone(),
@@ -106,11 +147,6 @@ impl WrappedBadgeContract {
             status: WrappedBadgeStatus::Active,
         };
 
-        let key = DataKey::WrappedBadge(
-            subject_pubkey.clone(),
-            source_chain_id,
-            source_tx_hash.clone(),
-        );
         env.storage().persistent().set(&key, &badge);
 
         // Mint 1 unit of the Stellar Asset to the subject's Address.
@@ -154,6 +190,11 @@ impl WrappedBadgeContract {
             .persistent()
             .get(&key)
             .expect("wrapped badge not found");
+
+        // Only the holder of the badge may unwrap it.
+        if caller != badge.subject {
+            panic!("only the badge holder may unwrap");
+        }
 
         badge.status = WrappedBadgeStatus::Burned;
         env.storage().persistent().set(&key, &badge);

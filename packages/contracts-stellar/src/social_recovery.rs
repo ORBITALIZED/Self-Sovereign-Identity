@@ -8,7 +8,7 @@
 //! NOTE: soroban-sdk v20 does **not** expose an `auth::Signature` type.
 //! Ed25519 signature verification is performed via `env.crypto().ed25519_verify`.
 
-use soroban_sdk::{contract, contractimpl, contracttype, Bytes, BytesN, Env, Map, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Bytes, BytesN, Env, Map, Vec};
 
 #[contracttype]
 #[derive(Clone)]
@@ -23,15 +23,25 @@ pub struct SocialRecoveryContract;
 #[contractimpl]
 impl SocialRecoveryContract {
     /// Configure the guardians for the caller.
+    ///
+    /// # Arguments
+    /// * `caller` — the invoking wallet `Address`; must authorise.
+    /// * `subject` — the identity pubkey whose guardians are being set; the
+    ///   caller must prove control of it via `ownership_signature`.
+    /// * `ownership_signature` — Ed25519 proof that `caller` controls `subject`.
     pub fn set_guardians(
         env: Env,
+        caller: Address,
         subject: BytesN<32>,
         guardians: Vec<BytesN<32>>,
         threshold: u32,
+        ownership_signature: BytesN<64>,
     ) -> bool {
-        // For M-of-N guardian management the subject authenticates as an Address.
-        // BytesN<32> cannot call require_auth directly; the caller must ensure
-        // they pass an Address that authorises this operation at the invoke layer.
+        // `BytesN<32>` cannot call `require_auth`; the caller authenticates as
+        // an Address and proves control of `subject` via a signature. This
+        // prevents anyone from reconfiguring another identity's guardians.
+        crate::storage::require_pubkey_ownership(&env, &caller, &subject, &ownership_signature);
+
         if threshold == 0 || threshold > guardians.len() {
             panic!("invalid threshold");
         }

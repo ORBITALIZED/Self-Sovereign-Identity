@@ -28,6 +28,24 @@ pub struct CredentialsIssuer;
 
 #[contractimpl]
 impl CredentialsIssuer {
+    /// One-time initialisation that records the admin (deployer).
+    ///
+    /// Required so [`Self::authorize_issuer`] has an admin to compare against;
+    /// without it, no issuer can ever be allow-listed and issuance is locked.
+    ///
+    /// # Panics
+    /// * If the contract has already been initialised.
+    ///
+    /// NOTE: named `initialize_credentials` (not `initialize`) because every
+    /// `#[contractimpl]` method becomes a WASM export in this single-crate
+    /// build, and `IdentityRegistry` already exports `initialize`.
+    pub fn initialize_credentials(env: Env, admin: Address) {
+        if env.storage().instance().has(&DataKey::Admin) {
+            panic!("already initialized");
+        }
+        env.storage().instance().set(&DataKey::Admin, &admin);
+    }
+
     /// Allow an address to act as credential issuer (caller = admin).
     /// Issuers are tracked in a separate storage key (IssuerAllowlist),
     /// NOT by overwriting DataKey::Admin.
@@ -81,6 +99,17 @@ impl CredentialsIssuer {
         valid_until: u64,
     ) -> bool {
         issuer.require_auth();
+
+        // Only allow-listed issuers may issue credentials. Without this check
+        // any address could mint arbitrary credentials for any subject.
+        let authorized: bool = env
+            .storage()
+            .instance()
+            .get::<DataKey, bool>(&DataKey::IssuerAllowlist(issuer.clone()))
+            .unwrap_or(false);
+        if !authorized {
+            panic!("issuer is not authorized");
+        }
 
         // Store the issuer as an Address — no conversion to BytesN<32> needed.
         let cred = Credential {

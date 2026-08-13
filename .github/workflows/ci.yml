@@ -236,6 +236,10 @@ jobs:
         working-directory: packages/contracts-stellar
         run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
 
+      - name: Test
+        working-directory: packages/contracts-stellar
+        run: cargo test --features testutils
+
   # =========================================================================
   # Python — AI Fraud Service tests
   # =========================================================================

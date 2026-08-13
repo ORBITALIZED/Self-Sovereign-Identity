@@ -9,18 +9,6 @@ publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-# NOTE: `cargo test --features testutils` cannot compile due to an upstream
-# dependency conflict in `soroban-env-host` (present in 21.x, 22.x, 23.x):
-#   - `rand_chacha v0.3.1` provides `CryptoRng` from `rand_core v0.6`
-#   - `ed25519-dalek v3.x`  provides `CryptoRng` from `rand_core v0.10`
-#   - The trait bound `ChaCha20Rng: CryptoRng` fails because the two traits
-#     come from different `rand_core` versions.
-#
-# The `test` unit tests in `src/test.rs` call `mock_all_auths()` which
-# requires the `testutils` feature, so `cargo test` without the feature
-# would also fail. To fix this permanently, migrate to soroban-sdk 27.x
-# (requires `wasm32v1-none` target, rustc 1.84+, and API changes).
-test = false
 
 [features]
 testutils = ["soroban-sdk/testutils"]
@@ -30,6 +18,15 @@ soroban-sdk = "=21.7.7"
 
 [dev-dependencies]
 soroban-sdk = { version = "=21.7.7", features = ["testutils"] }
+# `soroban-env-host` depends on `ed25519-dalek >=2.0.0` (resolving to 3.x, which
+# uses rand_core 0.10) but seeds it with `rand_chacha 0.3.1` (rand_core 0.6),
+# which breaks `SigningKey::generate` and therefore `cargo test --features
+# testutils`. The committed Cargo.lock pins ed25519-dalek to 2.2.0 (rand_core
+# 0.6) so the whole graph shares one rand_core. If the lockfile is ever
+# regenerated, re-apply: `cargo update -p ed25519-dalek --precise 2.2.0`.
+# This dev-dep is also used directly to mint the proof-of-ownership signatures
+# exercised by the access-control tests in src/test.rs.
+ed25519-dalek = "=2.2.0"
 
 [profile.release]
 opt-level = "z"

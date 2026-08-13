@@ -111,9 +111,15 @@ and exits 1 today (so the sentinel job is red today, and turns green on
 the fix). This way the team is paged automatically the moment any of
 the three fixes above lands.
 
-We also keep `[lib] test = false` in
+We also kept `[lib] test = false` in
 `packages/contracts-stellar/Cargo.toml` to keep the WASM release build
-green; flipping it back to `true` is queued behind the upstream fix.
+green while the upstream fix was pending.
+
+> **UPDATE — resolved.** Tests are re-enabled (`test = false` removed). The
+> release WASM build was always green; the remaining blocker was a separate
+> `rand_core` conflict in `soroban-env-host`, now worked around by pinning
+> `ed25519-dalek` to `2.2.0` in the committed `Cargo.lock` (see
+> `docs/upstream-issue-drafts/rs-stellar-xdr-arbitrary-regression.md`).
 
 ## Impact
 
