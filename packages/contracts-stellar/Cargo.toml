@@ -14,10 +14,10 @@ crate-type = ["cdylib", "rlib"]
 testutils = ["soroban-sdk/testutils"]
 
 [dependencies]
-soroban-sdk = "=21.7.7"
+soroban-sdk = "=27.0.5"
 
 [dev-dependencies]
-soroban-sdk = { version = "=21.7.7", features = ["testutils"] }
+soroban-sdk = { version = "=27.0.5", features = ["testutils"] }
 # `soroban-env-host` depends on `ed25519-dalek >=2.0.0` (resolving to 3.x, which
 # uses rand_core 0.10) but seeds it with `rand_chacha 0.3.1` (rand_core 0.6),
 # which breaks `SigningKey::generate` and therefore `cargo test --features
