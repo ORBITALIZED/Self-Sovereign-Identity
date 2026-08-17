@@ -26,7 +26,7 @@ soroban-sdk = { version = "=21.7.7", features = ["testutils"] }
 # regenerated, re-apply: `cargo update -p ed25519-dalek --precise 2.2.0`.
 # This dev-dep is also used directly to mint the proof-of-ownership signatures
 # exercised by the access-control tests in src/test.rs.
-ed25519-dalek = "=2.2.0"
+ed25519-dalek = "=3.0.0"
 
 [profile.release]
 opt-level = "z"
